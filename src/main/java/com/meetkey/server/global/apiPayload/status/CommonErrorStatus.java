@@ -1,14 +1,13 @@
 package com.meetkey.server.global.apiPayload.status;
 
 import com.meetkey.server.global.apiPayload.code.BaseCode;
-import com.meetkey.server.global.apiPayload.code.ResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum ErrorStatus implements BaseCode {
+public enum CommonErrorStatus implements BaseCode {
     /*
     @ 일반적인 응답
      */

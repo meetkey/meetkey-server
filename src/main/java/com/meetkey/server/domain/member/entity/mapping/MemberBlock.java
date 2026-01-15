@@ -17,12 +17,12 @@ public class MemberBlock extends BaseEntity {
     @EmbeddedId
     private FromToId memberBlockId;
 
-    @MapsId("from_id")
+    @MapsId("fromId")
     @JoinColumn(name = "from_member_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Member fromMember;
 
-    @MapsId("to_id")
+    @MapsId("toId")
     @JoinColumn(name = "to_member_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Member toMember;

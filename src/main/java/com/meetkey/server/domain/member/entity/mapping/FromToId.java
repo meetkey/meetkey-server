@@ -13,5 +13,4 @@ public class FromToId {
     @Column(name = "from_id")
     private Long fromId;
     @Column(name = "to_id")
-    private Long toId;
-}
+    private Long toId;}
