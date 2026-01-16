@@ -22,6 +22,7 @@ public class Member extends BaseEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Role role = Role.ROLE_USER;
 
     @Column(nullable = false)
