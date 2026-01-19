@@ -3,17 +3,17 @@ package com.meetkey.server.domain.report.entity.mapping;
 import com.meetkey.server.domain.report.entity.Report;
 import com.meetkey.server.domain.report.enums.ReportStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "report_management")
-public class ReportManagement {
+@Table(name = "report_history")
+public class ReportHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,11 +27,14 @@ public class ReportManagement {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ReportStatus reportStatus;
+    private ReportStatus status;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
+    private LocalDateTime suspendedAt;
+    private LocalDateTime suspendedUntil;
 
-
+    @Builder.Default
+    private Boolean isActive = false;
 }

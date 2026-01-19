@@ -21,8 +21,13 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/h2-console").permitAll()
                         .anyRequest().permitAll()
                 );
+
+        http.headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.sameOrigin())
+        );
 
         return http.build();
     }

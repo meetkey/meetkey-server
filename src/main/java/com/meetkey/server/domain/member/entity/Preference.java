@@ -1,9 +1,6 @@
 package com.meetkey.server.domain.member.entity;
 
-import com.meetkey.server.domain.member.enums.ChatType;
-import com.meetkey.server.domain.member.enums.FriendType;
-import com.meetkey.server.domain.member.enums.MeetingType;
-import com.meetkey.server.domain.member.enums.RelationType;
+import com.meetkey.server.domain.member.enums.*;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,6 +20,9 @@ public class Preference {
     @MapsId
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @Column(nullable = false)
+    private SocialType socialType;
 
     @Column(nullable = false)
     private MeetingType meetingType;
