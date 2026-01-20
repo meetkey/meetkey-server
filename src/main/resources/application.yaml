@@ -1,4 +1,6 @@
 spring:
+  jwt:
+    secret: ${JWT_SECRET_KEY}
   h2:
     console:
       enabled: true
