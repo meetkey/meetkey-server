@@ -1,6 +1,6 @@
-package com.meetkey.server.domain.member.entity;
+package com.meetkey.server.domain.chat.entity;
 
-import com.meetkey.server.domain.member.enums.InterestType;
+import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,15 +9,14 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Table(name = "chat_room")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "interest")
-public class Interest {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class ChatRoom extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private InterestType type;
+    private String type; // 방 유형 -> enum 으로 변경
 }

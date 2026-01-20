@@ -1,6 +1,5 @@
-package com.meetkey.server.domain.member.entity.mapping;
+package com.meetkey.server.domain.member.entity;
 
-import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.enums.Provider;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +16,7 @@ public class SocialLogin {
     private Long id;
 
     @Column(name = "provider_id", nullable = false)
-    private Long providerId;
+    private String providerId;
 
     @Column(name = "provider", nullable = false)
     @Enumerated(EnumType.STRING)

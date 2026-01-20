@@ -33,9 +33,4 @@ public class Report extends BaseEntity {
 
     @Column(nullable = false, length = 1000)
     private String body;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private ReportStatus reportStatus = ReportStatus.PENDING;
 }
