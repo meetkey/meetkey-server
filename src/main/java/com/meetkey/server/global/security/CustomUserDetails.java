@@ -15,6 +15,9 @@ public class CustomUserDetails implements UserDetails {
     private final String memberId;
     private final String role;
 
+    public Long getMemberId(){
+        return Long.parseLong(memberId);
+    }
     public CustomUserDetails(Member member){
         this.memberId = member.getId().toString();
         this.role = member.getRole().toString();
