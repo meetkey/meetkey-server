@@ -54,5 +54,5 @@ jobs:
             export DB_PW=${{ secrets.DB_PW }}
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
             
-            sudo -E docker-compose -f docker-compose.yml pull app
-            sudo -E docker-compose -f docker-compose.yml up -d --no-deps app
+            docker compose -f docker-compose.yml pull app
+            docker compose -f docker-compose.yml up -d --no-deps app
