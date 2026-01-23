@@ -3,11 +3,12 @@ services:
     image: ${DOCKER_USERNAME}/docker-springboot:${IMAGE_TAG:-latest}
     container_name: springboot-app
     ports:
-      - "80:8080" # EC2 80포트 -> 내부 8080포트 연결
+      - "80:8080"
     environment:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PW: ${DB_PW}
+      DB_DRIVER: ${DB_DRIVER}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     networks:
       - spring-boot-app-network

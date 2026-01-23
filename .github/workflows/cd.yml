@@ -52,7 +52,8 @@ jobs:
             export DB_URL='${{ secrets.DB_URL }}'
             export DB_USERNAME=${{ secrets.DB_USERNAME }}
             export DB_PW=${{ secrets.DB_PW }}
+            export DB_DRIVER='${{ secrets.DB_DRIVER }}'
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
             
-            docker compose -f docker-compose.yml pull app
-            docker compose -f docker-compose.yml up -d --no-deps app
+            docker compose -f docker-compose.yml pull spring-boot-app
+            docker compose -f docker-compose.yml up -d --no-deps spring-boot-app
