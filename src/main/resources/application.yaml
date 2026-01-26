@@ -23,3 +23,6 @@ coolsms:
   api-key: ${COOLSMS-API_KEY}
   api-secret: ${COOLSMS-API_SECRET}
   sender: ${COOLSMS-SENDER}
+
+admin:
+  secret: ${ADMIN_SECRET:1234}

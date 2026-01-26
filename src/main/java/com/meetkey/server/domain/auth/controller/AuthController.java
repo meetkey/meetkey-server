@@ -4,6 +4,7 @@ import com.meetkey.server.domain.auth.service.AuthService;
 import com.meetkey.server.domain.auth.service.SmsService;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.enums.Provider;
+import com.meetkey.server.domain.member.enums.Role;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
@@ -16,6 +17,7 @@ import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,6 +33,9 @@ public class AuthController {
     private final MemberRepository memberRepository;
     private final SmsService smsService;
 
+    @Value("${admin.secret}")
+    private String adminSecret;
+
     @GetMapping("/test")
     public ResponseEntity<?> getMember(@AuthenticationPrincipal CustomUserDetails details) {
         return ResponseEntity.ok()
@@ -38,22 +43,16 @@ public class AuthController {
     }
 
     @PostMapping("/test")
-    public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> test() {
-        Member m = Member.builder().build();
-        memberRepository.save(m);
+    public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> test(
+            @RequestHeader(value = "X-Admin-Secret", required = false) String secret,
+            @RequestBody OauthReqDTO.SignupReq signupReq
+    ) {
+        if (adminSecret == null || !adminSecret.equals(secret)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(BasicResponse.error(CommonErrorStatus._FORBIDDEN, null));
+        }
 
-        String accessToken = jwtUtil.createJwt("access", String.valueOf(1), "ROLE_USER", 10000L);
-        String refreshToken = jwtUtil.createJwt("refresh", String.valueOf(1), "ROLE_USER", 10000L);
-
-        memberService.updateRefreshToken("1", refreshToken);
-
-        JwtResDTO.JwtResponse jwts = JwtResDTO.JwtResponse.builder()
-                .isNewMember(true)
-                .memberId(1L)
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
-
+        JwtResDTO.JwtResponse jwts = authService.devSignup(signupReq);
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, jwts));
     }
