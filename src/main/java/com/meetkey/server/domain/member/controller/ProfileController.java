@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.member.controller;
 
+import com.meetkey.server.domain.member.enums.InterestType;
 import com.meetkey.server.domain.member.service.ProfileService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
@@ -21,10 +22,10 @@ public class ProfileController {
     @Operation(summary = "프로필 수정 API", description = "사용자의 위치, 한줄 소개를 변경합니다.")
     @PatchMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileResponse>> updateProfile(
-            @RequestAttribute("userId") Long userId,
+            @RequestAttribute("memberId") Long memberId,
             @RequestBody ProfileUpdateRequest request
     ) {
-        ProfileResponse response = profileService.updateProfile(userId, request);
+        ProfileResponse response = profileService.updateProfile(memberId, request);
 
         return ResponseEntity
                 .ok()
@@ -34,13 +35,26 @@ public class ProfileController {
     @Operation(summary = "프로필 수정 시 조회 API", description = "이름, 나이, 위치, 한줄 소개를 조회합니다.")
     @GetMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileResponse>> getProfile(
-        @RequestAttribute("userId") Long userId
+            @RequestAttribute("memberId") Long memberId
     ) {
-        ProfileResponse response = profileService.getMyProfile(userId);
+        ProfileResponse response = profileService.getMyProfile(memberId);
 
         return ResponseEntity
                 .ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
+    @Operation(summary = "관심사 수정 API", description = "관심사를 모두 삭제 후 다시 설정합니다.")
+    @PutMapping("/me/interests")
+    public ResponseEntity<BasicResponse<InterestResponse>> updateInterest(
+            @RequestAttribute("memberId") Long memberId,
+            @RequestBody InterestUpdateRequest request
+    ) {
+
+        InterestResponse response = profileService.updateInterests(memberId, request.interests());
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    }
 }

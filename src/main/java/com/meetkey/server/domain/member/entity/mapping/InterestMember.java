@@ -26,4 +26,9 @@ public class InterestMember {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public static InterestMember create(Member member, Interest interest) {
+        InterestMemberId id = new InterestMemberId(interest.getId(), member.getId());
+        return new InterestMember(id, interest, member);
+    }
 }
