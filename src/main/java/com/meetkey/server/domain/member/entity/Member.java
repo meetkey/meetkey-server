@@ -27,6 +27,14 @@ public class Member extends BaseEntity {
     @Builder.Default
     private Role role = Role.ROLE_USER;
 
+    private String name;
+
+    @Column(nullable = true)
+    private String location;
+
+    @Column(nullable = true)
+    private String bio;
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
@@ -70,5 +78,17 @@ public class Member extends BaseEntity {
     public void changeRefreshToken(String newRefreshToken, Long expMillis) {
         this.refreshToken = newRefreshToken;
         this.refreshTokenExpiration = LocalDateTime.now().plusNanos(expMillis);
+    }
+
+    // 프로필 업데이트
+    public void updateProfileInfo(String location, String bio) {
+        this.location = location;
+        this.bio = bio;
+    }
+
+    // 나이 계산 로직
+    public int getAge() {
+        if (this.birthday == null) return 0;
+        return LocalDate.now().getYear() - this.birthday.getYear() + 1;
     }
 }
