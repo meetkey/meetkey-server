@@ -64,19 +64,10 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
-    public InterestResponse getInterests(Long memberId) {
-        Member member = getMember(memberId);
-
-        List<InterestMember> mappings = interestMemberRepository.findAllByMember(member);
-
-        // InterestMember -> Interest 추출
-        List<Interest> interests = mappings.stream()
-                .map(InterestMember::getInterest)
-                .collect(Collectors.toList());
-
-        return profileConverter.toInterestResponse(interests);
-
+    public InterestCategoryResponse getAllInterests() {
+        return profileConverter.toCategoryResponse();
     }
+
 
     // 사용자 찾기 공통 로직
     private Member getMember(Long memberId) {

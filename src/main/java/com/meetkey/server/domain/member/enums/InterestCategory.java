@@ -1,7 +1,9 @@
 package com.meetkey.server.domain.member.enums;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
 @AllArgsConstructor
 public enum InterestCategory {
     DAILY("일상, 라이프스타일"),

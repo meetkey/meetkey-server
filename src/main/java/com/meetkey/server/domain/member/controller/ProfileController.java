@@ -1,6 +1,5 @@
 package com.meetkey.server.domain.member.controller;
 
-import com.meetkey.server.domain.member.enums.InterestType;
 import com.meetkey.server.domain.member.service.ProfileService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
@@ -44,8 +43,8 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "관심사 수정 API", description = "관심사를 모두 삭제 후 다시 설정합니다.")
-    @PutMapping("/me/interests")
+    @Operation(summary = "관심사 수정 API", description = "온보딩 및 관심사 수정 시 관심사를 수정합니다.")
+    @PutMapping("/me/interest")
     public ResponseEntity<BasicResponse<InterestResponse>> updateInterest(
             @RequestAttribute("memberId") Long memberId,
             @RequestBody InterestUpdateRequest request
@@ -58,16 +57,12 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "관심사 수정 시 조회 API", description = "기존 관심사들을 조회합니다.")
-    @GetMapping("/me/interests")
-    public ResponseEntity<BasicResponse<InterestResponse>> getInterests(
-            @RequestAttribute("memberId") Long memberId
-    ) {
-        InterestResponse response = profileService.getInterests(memberId);
-
-        return ResponseEntity
-                .ok()
-                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    @Operation(summary = "관심사 조회 API", description = "온보딩 및 관심사 수정 시 관심사들을 조회합니다.")
+    @GetMapping("/me/interest")
+    public ResponseEntity<BasicResponse<InterestCategoryResponse>> getInterestCategory() {
+        return ResponseEntity.ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, profileService.getAllInterests()));
     }
+
 }
 
