@@ -61,12 +61,26 @@ public class ProfileService {
         interestMemberRepository.saveAll(newMappings);
 
         return profileConverter.toInterestResponse(interests);
+    }
+
+    @Transactional(readOnly = true)
+    public InterestResponse getInterests(Long memberId) {
+        Member member = getMember(memberId);
+
+        List<InterestMember> mappings = interestMemberRepository.findAllByMember(member);
+
+        // InterestMember -> Interest 추출
+        List<Interest> interests = mappings.stream()
+                .map(InterestMember::getInterest)
+                .collect(Collectors.toList());
+
+        return profileConverter.toInterestResponse(interests);
 
     }
 
     // 사용자 찾기 공통 로직
-    private Member getMember(Long userId) {
-        return memberRepository.findById(userId).orElseThrow(
+    private Member getMember(Long memberId) {
+        return memberRepository.findById(memberId).orElseThrow(
                 () -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
     }
 

@@ -57,4 +57,17 @@ public class ProfileController {
                 .ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
+
+    @Operation(summary = "관심사 수정 시 조회 API", description = "기존 관심사들을 조회합니다.")
+    @GetMapping("/me/interests")
+    public ResponseEntity<BasicResponse<InterestResponse>> getInterests(
+            @RequestAttribute("memberId") Long memberId
+    ) {
+        InterestResponse response = profileService.getInterests(memberId);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    }
 }
+
