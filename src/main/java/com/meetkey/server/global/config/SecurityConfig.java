@@ -44,7 +44,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
                         .requestMatchers("/h2-console").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .anyRequest().authenticated()
                 );
 
         http.headers(headers -> headers
