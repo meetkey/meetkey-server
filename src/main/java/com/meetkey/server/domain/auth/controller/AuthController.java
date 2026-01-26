@@ -41,28 +41,15 @@ public class AuthController {
 
     @PostMapping("/test")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> test(
-            @RequestHeader(value = "X-Admin-Secret", required = false) String secret
+            @RequestHeader(value = "X-Admin-Secret", required = false) String secret,
+            @RequestBody OauthReqDTO.SignupReq signupReq
     ) {
         if (adminSecret == null || !adminSecret.equals(secret)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(BasicResponse.error(CommonErrorStatus._FORBIDDEN, null));
         }
 
-        Member m = Member.builder().role(Role.valueOf("ROLE_ADMIN")).build();
-        Member savedMember = memberRepository.save(m);
-
-        String accessToken = jwtUtil.createJwt("access", String.valueOf(savedMember.getId()), "ROLE_ADMIN", 1000 * 60 * 60 * 24 * 365L);
-        String refreshToken = jwtUtil.createJwt("refresh",  String.valueOf(savedMember.getId()), "ROLE_ADMIN", 1000 * 60 * 60 * 24 * 3650L);
-
-        memberService.updateRefreshToken(String.valueOf(savedMember.getId()), refreshToken);
-
-        JwtResDTO.JwtResponse jwts = JwtResDTO.JwtResponse.builder()
-                .isNewMember(true)
-                .accessToken(accessToken)
-                .memberId(savedMember.getId())
-                .refreshToken(refreshToken)
-                .build();
-
+        JwtResDTO.JwtResponse jwts = authService.devSignup(signupReq);
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, jwts));
     }
