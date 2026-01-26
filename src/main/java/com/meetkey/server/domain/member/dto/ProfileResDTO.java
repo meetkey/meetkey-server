@@ -5,7 +5,7 @@ import lombok.Builder;
 public class ProfileResDTO {
 
     @Builder
-    public record ProfileUpdateResponse(
+    public record ProfileResponse(
             Long memberId,
             String name,
             int age,

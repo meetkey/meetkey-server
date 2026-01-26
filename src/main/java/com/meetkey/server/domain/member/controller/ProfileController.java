@@ -20,11 +20,23 @@ public class ProfileController {
 
     @Operation(summary = "프로필 수정 API", description = "사용자의 위치, 한줄 소개를 변경합니다.")
     @PatchMapping("/me/profile")
-    public ResponseEntity<BasicResponse<ProfileUpdateResponse>> updateProfile(
+    public ResponseEntity<BasicResponse<ProfileResponse>> updateProfile(
             @RequestAttribute("userId") Long userId,
             @RequestBody ProfileUpdateRequest request
     ) {
-        ProfileUpdateResponse response = profileService.updateProfile(userId, request);
+        ProfileResponse response = profileService.updateProfile(userId, request);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    }
+
+    @Operation(summary = "프로필 수정 시 조회 API", description = "이름, 나이, 위치, 한줄 소개를 조회합니다.")
+    @GetMapping("/me/profile")
+    public ResponseEntity<BasicResponse<ProfileResponse>> getProfile(
+        @RequestAttribute("userId") Long userId
+    ) {
+        ProfileResponse response = profileService.getMyProfile(userId);
 
         return ResponseEntity
                 .ok()
