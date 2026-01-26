@@ -68,6 +68,11 @@ public class ProfileService {
         return profileConverter.toCategoryResponse();
     }
 
+    @Transactional(readOnly = true)
+    public PersonalityCategoryResponse getAllPersonality() {
+        return profileConverter.toPersonalityCategoryResponse();
+    }
+
 
     // 사용자 찾기 공통 로직
     private Member getMember(Long memberId) {

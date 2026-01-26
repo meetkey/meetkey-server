@@ -22,17 +22,24 @@ public class Preference {
     private Member member;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private SocialType socialType;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private MeetingType meetingType;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private ChatType chatType;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private FriendType friendType;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private RelationType relationType;
+
+
 }

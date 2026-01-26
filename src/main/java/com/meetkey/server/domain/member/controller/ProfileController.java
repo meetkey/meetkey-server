@@ -64,5 +64,12 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, profileService.getAllInterests()));
     }
 
+    @Operation(summary = "성향 조회 API", description = "온본딩 및 성향 수정 시 성향들을 조회합니다.")
+    @GetMapping("/me/personality")
+    public ResponseEntity<BasicResponse<PersonalityCategoryResponse>> getPersonalityCategory() {
+        return ResponseEntity.ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, profileService.getAllPersonality()));
+    }
+
 }
 

@@ -24,11 +24,11 @@ public class ProfileResDTO {
 
     @Builder
     public record InterestCategoryResponse(
-            List<CategoryDetail> categories
+            List<InterestCategoryDetail> categories
     ) {}
 
     @Builder
-    public record CategoryDetail(
+    public record InterestCategoryDetail(
             String category,
             List<InterestItem> items
     ) {}
@@ -37,6 +37,18 @@ public class ProfileResDTO {
     public record InterestItem(
             InterestType code,
             String name
+    ) {}
+
+
+    @Builder
+    public record PersonalityCategoryResponse(
+            List<PersonalityCategoryDetail> categories
+    ) {}
+
+    @Builder
+    public record PersonalityCategoryDetail(
+            String title,
+            List<String> options
     ) {}
 
 }
