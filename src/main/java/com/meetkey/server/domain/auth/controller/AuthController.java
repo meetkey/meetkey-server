@@ -1,6 +1,7 @@
 package com.meetkey.server.domain.auth.controller;
 
 import com.meetkey.server.domain.auth.service.AuthService;
+import com.meetkey.server.domain.auth.service.SmsService;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.enums.Provider;
 import com.meetkey.server.domain.member.enums.Role;
@@ -14,6 +15,7 @@ import com.meetkey.server.global.security.jwt.JwtUtil;
 import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,12 +31,13 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final MemberService memberService;
     private final MemberRepository memberRepository;
+    private final SmsService smsService;
 
     @Value("${admin.secret}")
     private String adminSecret;
 
     @GetMapping("/test")
-    public ResponseEntity<?> getMember(@AuthenticationPrincipal CustomUserDetails details){
+    public ResponseEntity<?> getMember(@AuthenticationPrincipal CustomUserDetails details) {
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, memberRepository.findById(1L)));
     }
@@ -68,7 +71,7 @@ public class AuthController {
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> signup(
             @RequestParam("provider") Provider provider,
             @RequestBody OauthReqDTO.SignupReq signupReq
-    ){
+    ) {
         if (provider.equals(Provider.KAKAO)) {
             JwtResDTO.JwtResponse jwts = authService.signup(provider, signupReq);
             return ResponseEntity.ok()
@@ -88,6 +91,30 @@ public class AuthController {
         JwtResDTO.JwtResponse jwts = authService.reissue(refreshToken);
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, jwts));
+    }
+
+    @Operation(summary = "인증번호 발송 API", description = "phone 해당하는 번호에 인증번호를 발송합니다.")
+    @PostMapping("/sms/send")
+    public ResponseEntity<BasicResponse<Boolean>> sendAuthCode(@RequestParam String phone) {
+        smsService.sendAuthCode(phone);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, true));
+    }
+
+    @Operation(summary = "인증번호 검증 API", description = "인증번호가 일치하는지 검증합니다. (인증시간 180초)")
+    @PostMapping("/sms/verify")
+    public ResponseEntity<BasicResponse<Boolean>> verifyAuthCode(
+            @RequestParam String phone,
+            @RequestParam String code
+    ) {
+        smsService.verifyAuthCode(phone, code);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, true));
+
     }
 
 }
