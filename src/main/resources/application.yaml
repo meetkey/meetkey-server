@@ -1,4 +1,9 @@
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   jwt:
     secret: ${JWT_SECRET_KEY:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
 
@@ -6,10 +11,10 @@ spring:
     name: server
 
   datasource:
-#    url: ${DB_URL:jdbc:h2:mem:testdb}
+    url: ${DB_URL:jdbc:h2:mem:testdb}
     username: ${DB_USERNAME:sa}
     password: ${DB_PW:}
-#    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
 
   jpa:
     hibernate:
@@ -20,9 +25,9 @@ spring:
         format_sql: true
 
 coolsms:
-  api-key: ${COOLSMS-API_KEY}
-  api-secret: ${COOLSMS-API_SECRET}
-  sender: ${COOLSMS-SENDER}
+  api-key: ${COOLSMS_API_KEY:}
+  api-secret: ${COOLSMS_API_SECRET:}
+  sender: ${COOLSMS_SENDER:}
 
 admin:
   secret: ${ADMIN_SECRET:1234}
