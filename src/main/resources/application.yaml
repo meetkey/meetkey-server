@@ -20,4 +20,4 @@ spring:
         format_sql: true
 
 admin:
-  secret: ${ADMIN_SECRET}
+  secret: ${ADMIN_SECRET:1234}
