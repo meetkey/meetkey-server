@@ -10,6 +10,7 @@ services:
       DB_PW: ${DB_PW}
       DB_DRIVER: ${DB_DRIVER}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ADMIN_SECRET: ${ADMIN_SECRET}
     networks:
       - spring-boot-app-network
 
