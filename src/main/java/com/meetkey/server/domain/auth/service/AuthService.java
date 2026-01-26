@@ -32,6 +32,16 @@ public class AuthService {
     private final SocialLoginRepository socialLoginRepository;
     private final JwtUtil jwtUtil;
     private final MemberService memberService;
+    @Transactional
+    public JwtResDTO.JwtResponse devSignup(OauthReqDTO.SignupReq req){
+        String providerId = "000000000";
+        Provider provider = Provider.KAKAO;
+
+        MemberReqDTO.Signup memberReqDTO = OauthConverter.toMemberSignUpDTO(req);
+        Member member = memberService.devSignup(provider, providerId, memberReqDTO);
+
+        return getDevJwtResponseDTO(member);
+    }
 
     @Transactional
     public JwtResDTO.JwtResponse signup(Provider provider, OauthReqDTO.SignupReq req){
@@ -96,6 +106,20 @@ public class AuthService {
     private JwtResDTO.JwtResponse getJwtResponseDTO(Member member) {
         String accessToken = jwtUtil.createJwt("access", member.getId().toString(), member.getRole().toString(), ACCESS_TOKEN_EXP);
         String refreshToken = jwtUtil.createJwt("refresh", member.getId().toString(), member.getRole().toString(), REFRESH_TOKEN_EXP);
+
+        member.changeRefreshToken(refreshToken, REFRESH_TOKEN_EXP);
+
+        return JwtResDTO.JwtResponse.builder()
+                .memberId(member.getId())
+                .isNewMember(false)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    private JwtResDTO.JwtResponse getDevJwtResponseDTO(Member member) {
+        String accessToken = jwtUtil.createJwt("access", member.getId().toString(), member.getRole().toString(), 1000 * 60 * 60 * 24 * 365L);
+        String refreshToken = jwtUtil.createJwt("refresh", member.getId().toString(), member.getRole().toString(), 1000 * 60 * 60 * 24 * 3650L);
 
         member.changeRefreshToken(refreshToken, REFRESH_TOKEN_EXP);
 

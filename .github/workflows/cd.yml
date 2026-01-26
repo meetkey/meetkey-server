@@ -54,6 +54,7 @@ jobs:
             export DB_PW=${{ secrets.DB_PW }}
             export DB_DRIVER='${{ secrets.DB_DRIVER }}'
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
+            export ADMIN_SECRET='${{ secrets.ADMIN_SECRET }}'
             
             docker compose -f docker-compose.yml pull spring-boot-app
             docker compose -f docker-compose.yml up -d --no-deps spring-boot-app
