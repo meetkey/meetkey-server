@@ -116,7 +116,7 @@ public class ProfileConverter {
                 .build();
     }
 
-    // 내 프로필 조회
+    // 내 프로필 조회 응답
     public MyProfileResponse toProfileResponse(
             Member member,
             List<Interest> interests,
@@ -135,6 +135,37 @@ public class ProfileConverter {
                 .profileImage("image")
                 .recommendCount(0)
                 .notRecommendCount(0)
+                .interests(interestNames)
+                .personalities(toPersonalityUpdateResponse(personality))
+                .bio(member.getBio())
+                .build();
+    }
+
+    // 다른 사람 프로필 조회 응답
+    public OtherProfileResponse toOtherProfileResponse(
+            Member member,
+            List<Interest> interests,
+            Preference personality,
+            String distance
+    ) {
+        List<String> interestNames = interests.stream()
+                .map(interest -> interest.getType().name())
+                .toList();
+
+        return OtherProfileResponse.builder()
+                .memberId(member.getId())
+                .name(member.getName())
+                .age(member.getAge())
+                .gender(member.getGender())
+                .homeTown(member.getHomeTown())
+                .profileImage("image")
+                .location(member.getLocation())
+                .distance(distance)
+                .recommendCount(0)
+                .notRecommendCount(0)
+                .first(member.getFirstLanguage())
+                .target(member.getTargetLanguage())
+                .level(member.getTargetLanguageLevel())
                 .interests(interestNames)
                 .personalities(toPersonalityUpdateResponse(personality))
                 .bio(member.getBio())

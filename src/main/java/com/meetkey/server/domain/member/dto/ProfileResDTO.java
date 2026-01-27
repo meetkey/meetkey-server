@@ -85,4 +85,29 @@ public class ProfileResDTO {
             String bio
     ) {}
 
+    @Builder
+    public record OtherProfileResponse(
+            // 헤더부분
+            Long memberId,
+            String name,
+            int age,
+            Gender gender,
+            HomeTown homeTown,
+            String profileImage,
+            String location,
+            String distance, // 나와의 거리
+
+            // 평판
+            int recommendCount,
+            int notRecommendCount,
+
+            Language first,
+            Language target,
+            Level level,
+
+            List<String> interests,
+            PersonalityUpdateResponse personalities,
+            String bio
+    ) {}
+
 }

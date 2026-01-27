@@ -106,5 +106,22 @@ public class ProfileController {
                 .ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
+
+    @Operation(summary = "상대방 프로필 조회 API", description = "상대방 프로필을 조회합니다.")
+    @GetMapping("/{targetId}")
+    public ResponseEntity<BasicResponse<OtherProfileResponse>> getOtherProfile(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long targetId
+    ) {
+        Long myId = customUserDetails.getMemberId();
+
+        OtherProfileResponse response = profileService.getOtherProfile(myId, targetId);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    }
+
+
 }
 

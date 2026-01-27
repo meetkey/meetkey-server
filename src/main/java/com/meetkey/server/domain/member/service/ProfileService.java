@@ -106,7 +106,7 @@ public class ProfileService {
     public MyProfileResponse getMyProfile(Long memberId) {
         Member member = getMember(memberId);
 
-        Preference preference = preferenceRepository.findById(memberId).orElse(null);
+        Preference preference = preferenceRepository.findById(member.getId()).orElse(null);
 
         List<InterestMember> interestMembers = interestMemberRepository.findAllByMember(member);
         List<Interest> interests = interestMembers.stream()
@@ -116,6 +116,27 @@ public class ProfileService {
         return profileConverter.toProfileResponse(member, interests, preference);
     }
 
+    // 다른 사람 프로필 조회
+    @Transactional(readOnly = true)
+    public OtherProfileResponse getOtherProfile(Long memberId, Long targetMemberId) {
+        Member me = getMember(memberId);
+        Member target = getMember(targetMemberId);
+
+        // 나와의 거리 계산
+        String distance = calculateDistance(
+                me.getLatitude(), me.getLongitude(),
+                target.getLatitude(), target.getLongitude()
+        );
+
+        Preference preference = preferenceRepository.findById(target.getId()).orElse(null);
+        List<InterestMember> interestMembers = interestMemberRepository.findAllByMember(target);
+        List<Interest> interests = interestMembers.stream()
+                .map(InterestMember::getInterest)
+                .toList();
+
+        return profileConverter.toOtherProfileResponse(target, interests, preference, distance);
+    }
+
 
     // 사용자 찾기 공통 로직
     private Member getMember(Long memberId) {
@@ -123,6 +144,23 @@ public class ProfileService {
                 () -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
     }
 
+    // 나와의 거리 계산 메소
+    private String calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
+        if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+            return "알 수 없음"; // 좌표 없는 경우 처리
+        }
 
+        double theta = lon1 - lon2;
+        double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
 
+        dist = Math.acos(dist);
+        dist = Math.toDegrees(dist);
+        dist = dist * 60 * 1.1515;
+        dist = dist * 1.609344; // Mile -> km 변환
+
+        // 소수점 첫째 자리까지 포맷팅 (예: "2.5km")
+        return String.format("%.1fkm", dist);
+
+    }
 }

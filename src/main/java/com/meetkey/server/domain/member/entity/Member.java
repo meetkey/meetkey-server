@@ -29,6 +29,10 @@ public class Member extends BaseEntity {
 
     private String name;
 
+    private Double latitude;
+
+    private Double longitude;
+
     @Column(nullable = true)
     private String location;
 
@@ -94,5 +98,5 @@ public class Member extends BaseEntity {
         if (this.birthday == null) return 0;
         return LocalDate.now().getYear() - this.birthday.getYear() + 1;
     }
-    
+
 }
