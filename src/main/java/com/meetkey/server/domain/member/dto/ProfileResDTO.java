@@ -1,7 +1,6 @@
 package com.meetkey.server.domain.member.dto;
 
-import com.meetkey.server.domain.member.enums.InterestCategory;
-import com.meetkey.server.domain.member.enums.InterestType;
+import com.meetkey.server.domain.member.enums.*;
 import lombok.Builder;
 
 import java.util.List;
@@ -49,6 +48,15 @@ public class ProfileResDTO {
     public record PersonalityCategoryDetail(
             String title,
             List<String> options
+    ) {}
+
+    @Builder
+    public record PersonalityUpdateResponse(
+            SocialType socialType,
+            MeetingType meetingType,
+            ChatType chatType,
+            FriendType friendType,
+            RelationType relationType
     ) {}
 
 }

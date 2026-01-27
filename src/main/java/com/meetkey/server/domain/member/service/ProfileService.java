@@ -3,6 +3,7 @@ package com.meetkey.server.domain.member.service;
 import com.meetkey.server.domain.member.converter.ProfileConverter;
 import com.meetkey.server.domain.member.entity.Interest;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.entity.Preference;
 import com.meetkey.server.domain.member.entity.mapping.InterestMember;
 import com.meetkey.server.domain.member.enums.InterestType;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
@@ -10,6 +11,7 @@ import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.InterestMemberRepository;
 import com.meetkey.server.domain.member.repository.InterestRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
+import com.meetkey.server.domain.member.repository.PreferenceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class ProfileService {
     private final ProfileConverter profileConverter;
     private final InterestRepository interestRepository;
     private final InterestMemberRepository interestMemberRepository;
+    private final PreferenceRepository preferenceRepository;
 
     public ProfileResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
@@ -71,6 +74,32 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public PersonalityCategoryResponse getAllPersonality() {
         return profileConverter.toPersonalityCategoryResponse();
+    }
+
+    public PersonalityUpdateResponse updatePersonality(Long memberId, PersonalityUpdateRequest request) {
+        Member member = getMember(memberId);
+
+        Preference preference = preferenceRepository.findById(member.getId()).orElse(null);
+        if (preference == null) {
+             preference = Preference.create(
+                    member,
+                    request.socialType(),
+                    request.meetingType(),
+                    request.chatType(),
+                    request.friendType(),
+                    request.relationType()
+            );
+            preferenceRepository.save(preference);
+        } else {
+            preference.update(
+                    request.socialType(),
+                    request.meetingType(),
+                    request.chatType(),
+                    request.friendType(),
+                    request.relationType()
+            );
+        }
+        return profileConverter.toPersonalityUpdateResponse(preference);
     }
 
 

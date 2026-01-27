@@ -3,9 +3,11 @@ package com.meetkey.server.domain.member.controller;
 import com.meetkey.server.domain.member.service.ProfileService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
+import com.meetkey.server.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import static com.meetkey.server.domain.member.dto.ProfileReqDTO.*;
@@ -21,9 +23,11 @@ public class ProfileController {
     @Operation(summary = "프로필 수정 API", description = "사용자의 위치, 한줄 소개를 변경합니다.")
     @PatchMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileResponse>> updateProfile(
-            @RequestAttribute("memberId") Long memberId,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody ProfileUpdateRequest request
     ) {
+
+        Long memberId = customUserDetails.getMemberId();
         ProfileResponse response = profileService.updateProfile(memberId, request);
 
         return ResponseEntity
@@ -34,8 +38,10 @@ public class ProfileController {
     @Operation(summary = "프로필 수정 시 조회 API", description = "이름, 나이, 위치, 한줄 소개를 조회합니다.")
     @GetMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileResponse>> getProfile(
-            @RequestAttribute("memberId") Long memberId
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
+
+        Long memberId = customUserDetails.getMemberId();
         ProfileResponse response = profileService.getMyProfile(memberId);
 
         return ResponseEntity
@@ -46,10 +52,11 @@ public class ProfileController {
     @Operation(summary = "관심사 수정 API", description = "온보딩 및 관심사 수정 시 관심사를 수정합니다.")
     @PutMapping("/me/interest")
     public ResponseEntity<BasicResponse<InterestResponse>> updateInterest(
-            @RequestAttribute("memberId") Long memberId,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody InterestUpdateRequest request
     ) {
 
+        Long memberId = customUserDetails.getMemberId();
         InterestResponse response = profileService.updateInterests(memberId, request.interests());
 
         return ResponseEntity
@@ -71,5 +78,19 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, profileService.getAllPersonality()));
     }
 
+    @Operation(summary = "성향 수정 API", description = "온보딩 및 성향 수정 시 성향을 수정합니다.")
+    @PutMapping("/me/personality")
+    public ResponseEntity<BasicResponse<PersonalityUpdateResponse>> updatePersonality(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody PersonalityUpdateRequest request
+    ) {
+        Long memberId = customUserDetails.getMemberId();
+
+        PersonalityUpdateResponse response = profileService.updatePersonality(memberId, request);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    }
 }
 

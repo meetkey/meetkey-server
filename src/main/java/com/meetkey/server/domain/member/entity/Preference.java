@@ -41,5 +41,28 @@ public class Preference {
     @Enumerated(EnumType.STRING)
     private RelationType relationType;
 
+    public Preference(Member member, SocialType social, MeetingType meeting, ChatType chat, FriendType friend, RelationType relation) {
+        this.member = member;
+        this.socialType = social;
+        this.meetingType = meeting;
+        this.chatType = chat;
+        this.friendType = friend;
+        this.relationType = relation;
+    }
+
+    // 성향이 없는 경우 생성
+    public static Preference create(Member member, SocialType social, MeetingType meeting, ChatType chat, FriendType friend, RelationType relation) {
+        return new Preference(member, social, meeting, chat, friend, relation);
+    }
+
+    // 성향 수정 메서드
+    public void update(SocialType social, MeetingType meeting, ChatType chat, FriendType friend, RelationType relation) {
+        this.socialType = social;
+        this.meetingType = meeting;
+        this.chatType = chat;
+        this.friendType = friend;
+        this.relationType = relation;
+    }
+
 
 }

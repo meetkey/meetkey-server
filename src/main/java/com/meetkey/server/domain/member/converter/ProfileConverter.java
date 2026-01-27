@@ -2,6 +2,7 @@ package com.meetkey.server.domain.member.converter;
 
 import com.meetkey.server.domain.member.entity.Interest;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.entity.Preference;
 import com.meetkey.server.domain.member.enums.*;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 @Component
 public class ProfileConverter {
 
+    // 프로필 수정 변환
     public ProfileResponse toProfileRes(Member member) {
         return ProfileResponse.builder()
                 .memberId(member.getId())
@@ -26,6 +28,7 @@ public class ProfileConverter {
                 .build();
     }
 
+    // 관심사 수정 변환
     public InterestResponse toInterestResponse(List<Interest> interests) {
         List<InterestType> types = interests.stream()
                 .map(Interest::getType)
@@ -36,6 +39,7 @@ public class ProfileConverter {
                 .build();
     }
 
+    // 관심사 조회 변환
     public InterestCategoryResponse toCategoryResponse() {
 
         // 모든 관심사를 카테고리별로 분류
@@ -70,6 +74,7 @@ public class ProfileConverter {
                 .build();
     }
 
+    // 성향 조회 변환
     public PersonalityCategoryResponse toPersonalityCategoryResponse() {
         List<PersonalityCategoryDetail> categories = new ArrayList<>();
 
@@ -94,6 +99,17 @@ public class ProfileConverter {
         return PersonalityCategoryDetail.builder()
                 .title(title)
                 .options(options)
+                .build();
+    }
+
+    // 관심사 수정 변환
+    public PersonalityUpdateResponse toPersonalityUpdateResponse(Preference preference) {
+        return PersonalityUpdateResponse.builder()
+                .socialType(preference.getSocialType())
+                .chatType(preference.getChatType())
+                .meetingType(preference.getMeetingType())
+                .friendType(preference.getFriendType())
+                .relationType(preference.getRelationType())
                 .build();
     }
 }
