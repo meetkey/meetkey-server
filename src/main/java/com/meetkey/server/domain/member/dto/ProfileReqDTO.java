@@ -9,7 +9,10 @@ public class ProfileReqDTO {
 
     public record ProfileUpdateRequest(
             String location,
-            String bio
+            String bio,
+            Language first,
+            Language target,
+            Level level
     ) {}
 
     public record InterestUpdateRequest(

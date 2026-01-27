@@ -25,6 +25,9 @@ public class ProfileConverter {
                 .age(member.getAge())
                 .location(member.getLocation())
                 .bio(member.getBio())
+                .first(member.getFirstLanguage())
+                .target(member.getTargetLanguage())
+                .level(member.getTargetLanguageLevel())
                 .build();
     }
 

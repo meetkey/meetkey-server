@@ -81,9 +81,12 @@ public class Member extends BaseEntity {
     }
 
     // 프로필 업데이트
-    public void updateProfileInfo(String location, String bio) {
+    public void updateProfileInfo(String location, String bio, Language first, Language target, Level level) {
         this.location = location;
         this.bio = bio;
+        this.firstLanguage = first;
+        this.targetLanguage = target;
+        this.targetLanguageLevel = level;
     }
 
     // 나이 계산 로직
@@ -91,4 +94,5 @@ public class Member extends BaseEntity {
         if (this.birthday == null) return 0;
         return LocalDate.now().getYear() - this.birthday.getYear() + 1;
     }
+    
 }

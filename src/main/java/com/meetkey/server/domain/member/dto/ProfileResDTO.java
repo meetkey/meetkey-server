@@ -13,7 +13,10 @@ public class ProfileResDTO {
             String name,
             int age,
             String location,
-            String bio
+            String bio,
+            Language first,
+            Language target,
+            Level level
     ) {}
 
     @Builder

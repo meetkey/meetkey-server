@@ -36,7 +36,7 @@ public class ProfileService {
     public ProfileResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
 
-        member.updateProfileInfo(request.location(), request.bio());
+        member.updateProfileInfo(request.location(), request.bio(), request.first(), request.target(), request.level());
 
         return profileConverter.toProfileRes(member);
     }
