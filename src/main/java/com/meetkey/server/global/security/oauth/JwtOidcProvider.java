@@ -18,16 +18,15 @@ import java.util.Base64;
 public class JwtOidcProvider {
     private final String KID = "kid";
 
-    public String getKidFromIdTokenHeader(String token, String iss, String aud, String nonce){
-        return (String) getIdTokenClaims(token, iss, aud, nonce).getHeader().get(KID);
+    public String getKidFromIdTokenHeader(String token, String iss, String aud){
+        return (String) getIdTokenClaims(token, iss, aud).getHeader().get(KID);
     }
 
-    private Jwt<Header, Claims> getIdTokenClaims(String token, String iss, String aud, String nonce){
+    private Jwt<Header, Claims> getIdTokenClaims(String token, String iss, String aud){
         try {
             return Jwts.parser()
                     .requireAudience(aud) // aud 검증 (app id)
                     .requireIssuer(iss) // iss 검증 (카카오)
-                    .require("nonce", nonce) // nonce 검증
                     .build()
                     .parseUnsecuredClaims(removeSigFromIdToken(token));
         } catch (Exception e){

@@ -31,3 +31,9 @@ coolsms:
 
 admin:
   secret: ${ADMIN_SECRET:1234}
+
+kakao:
+  app-key: ${KAKAO_APP_KEY:}
+
+apple:
+  app-key: ${APPLE_APP_KEY:}
