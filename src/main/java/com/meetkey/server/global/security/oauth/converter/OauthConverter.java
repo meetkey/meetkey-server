@@ -7,18 +7,13 @@ public class OauthConverter {
     public static MemberReqDTO.Signup toMemberSignUpDTO(OauthReqDTO.SignupReq req){
         return MemberReqDTO.Signup.builder()
                 .birthday(req.birthday())
+                .name(req.name())
                 .gender(req.gender())
                 .firstLanguage(req.firstLanguage())
                 .homeTown(req.homeTown())
                 .phoneNumber(req.phoneNumber())
                 .targetLanguage(req.targetLanguage())
                 .targetLanguageLevel(req.targetLanguageLevel())
-                .interests(req.interests())
-                .meetingType(req.meetingType())
-                .relationType(req.relationType())
-                .chatType(req.chatType())
-                .friendType(req.friendType())
-                .socialType(req.socialType())
                 .build();
     }
 }

@@ -65,9 +65,11 @@ public class Member extends BaseEntity {
     private String phoneNumber;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer recommendCount = 0;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer notRecommendCount = 0;
 
     private String refreshToken;

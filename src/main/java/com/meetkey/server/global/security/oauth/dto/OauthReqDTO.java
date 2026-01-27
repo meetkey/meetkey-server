@@ -15,6 +15,7 @@ public class OauthReqDTO {
     public record SignupReq(
             @NotNull String idToken,
 
+            @NotNull String name,
             @NotNull @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthday,
             @NotNull Gender gender,
             @NotNull HomeTown homeTown,
@@ -22,13 +23,6 @@ public class OauthReqDTO {
             @NotNull Language targetLanguage,
             @NotNull Level targetLanguageLevel,
 
-            @NotNull String phoneNumber,
-
-            @NotNull List<InterestType> interests,
-            @NotNull SocialType socialType,
-            @NotNull MeetingType meetingType,
-            @NotNull ChatType chatType,
-            @NotNull FriendType friendType,
-            @NotNull RelationType relationType
+            @NotNull String phoneNumber
     ){}
 }
