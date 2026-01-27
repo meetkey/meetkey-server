@@ -9,6 +9,7 @@ import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.jwt.JwtUtil;
 import com.meetkey.server.global.security.oauth.OauthOidcHelper;
+import com.meetkey.server.global.security.oauth.apple.AppleOauthClient;
 import com.meetkey.server.global.security.oauth.converter.OauthConverter;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
@@ -16,6 +17,7 @@ import com.meetkey.server.domain.auth.exception.AuthException;
 import com.meetkey.server.global.security.oauth.dto.OidcDTO;
 import com.meetkey.server.global.security.oauth.kakao.KakaoOauthClient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +29,19 @@ public class AuthService {
     private static final Long ACCESS_TOKEN_EXP = 600000L; // 10분
     private static final Long REFRESH_TOKEN_EXP = 86400000L; // 24시간
 
+    @Value("${kakao.app-key}")
+    private String kakaoAppKey;
+    @Value(("{apple.app-key}"))
+    private String appleAppKey;
+
     private final KakaoOauthClient kakaoClient;
+    private final AppleOauthClient appleClient;
+
     private final OauthOidcHelper oAuthOIDCHelper;
     private final SocialLoginRepository socialLoginRepository;
     private final JwtUtil jwtUtil;
     private final MemberService memberService;
+
     @Transactional
     public JwtResDTO.JwtResponse devSignup(OauthReqDTO.SignupReq req){
         String providerId = "000000000";
@@ -46,10 +56,19 @@ public class AuthService {
     @Transactional
     public JwtResDTO.JwtResponse signup(Provider provider, OauthReqDTO.SignupReq req){
         // 카카오 플랫폼 인증 및 ID 추출
-        String providerId = getProviderIdFromIdToken(req.idToken(), req.nonce());
 
-        // Member 생성
+        String providerId;
+        if (provider == Provider.KAKAO) {
+            providerId = getKakaoProviderIdFromIdToken(req.idToken());
+        }
+        else if (provider == Provider.APPLE) {
+            providerId = getAppleProviderIdFromIdToken(req.idToken());
+        }
+        else throw new AuthException(AuthErrorStatus.INVALID_SOCIAL);
+
+
         MemberReqDTO.Signup memberReqDTO = OauthConverter.toMemberSignUpDTO(req);
+        // Member 생성
         Member member = memberService.signup(provider, providerId, memberReqDTO);
 
         // 밋키 서비스 토큰 발급
@@ -57,8 +76,8 @@ public class AuthService {
     }
 
     @Transactional
-    public JwtResDTO.JwtResponse login(Provider provider, String idToken, String nonce){
-        String providerId = getProviderIdFromIdToken(idToken, nonce);
+    public JwtResDTO.JwtResponse login(Provider provider, String idToken){
+        String providerId = getKakaoProviderIdFromIdToken(idToken);
 
         Optional<SocialLogin> socialMember =
                 socialLoginRepository.findByProviderAndProviderId(provider, providerId);
@@ -130,14 +149,24 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .build();
     }
+    private String getAppleProviderIdFromIdToken(String idToken){
+        OidcDTO.OIDCPublicKeys response = appleClient.getAppleOIDCOpenKeys();
+        OidcDTO.OIDCDecodePayload payload = oAuthOIDCHelper.getPayloadFromIdToken(
+                idToken,
+                "https://appleid.apple.com",
+                appleAppKey,
+                response
+        );
 
-    private String getProviderIdFromIdToken(String idToken, String nonce){
+        return payload.sub();
+    }
+
+    private String getKakaoProviderIdFromIdToken(String idToken){
         OidcDTO.OIDCPublicKeys response = kakaoClient.getKakaoOIDCOpenKeys();
         OidcDTO.OIDCDecodePayload payload = oAuthOIDCHelper.getPayloadFromIdToken(
                 idToken,
                 "https://kauth.kakao.com",
-                "우리앱REST_API_키",
-                nonce,
+                kakaoAppKey,
                 response
         );
 
