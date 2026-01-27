@@ -9,6 +9,8 @@ public class ProfileReqDTO {
 
     public record ProfileUpdateRequest(
             String location,
+            Double latitude,
+            Double longitude,
             String bio,
             Language first,
             Language target,
@@ -28,4 +30,8 @@ public class ProfileReqDTO {
             RelationType relationType
     ) {}
 
+    public record EvaluationRequest(
+            Long targetMemberId,
+            EvaluationType type
+    ) {}
 }

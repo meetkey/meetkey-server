@@ -4,14 +4,14 @@ import com.meetkey.server.domain.member.converter.ProfileConverter;
 import com.meetkey.server.domain.member.entity.Interest;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.Preference;
+import com.meetkey.server.domain.member.entity.mapping.Evaluation;
 import com.meetkey.server.domain.member.entity.mapping.InterestMember;
+import com.meetkey.server.domain.member.entity.mapping.MemberLocation;
+import com.meetkey.server.domain.member.enums.EvaluationType;
 import com.meetkey.server.domain.member.enums.InterestType;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
-import com.meetkey.server.domain.member.repository.InterestMemberRepository;
-import com.meetkey.server.domain.member.repository.InterestRepository;
-import com.meetkey.server.domain.member.repository.MemberRepository;
-import com.meetkey.server.domain.member.repository.PreferenceRepository;
+import com.meetkey.server.domain.member.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +32,24 @@ public class ProfileService {
     private final InterestRepository interestRepository;
     private final InterestMemberRepository interestMemberRepository;
     private final PreferenceRepository preferenceRepository;
+    private final MemberLocationRepository memberLocationRepository;
+    private final EvaluationRepository evaluationRepository;
 
     public ProfileUpdateResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
 
         member.updateProfileInfo(request.location(), request.bio(), request.first(), request.target(), request.level());
+
+        if (request.latitude() != null && request.longitude() != null) {
+            MemberLocation memberLocation = memberLocationRepository.findByMember(member)
+                    .orElse(null);
+            if (memberLocation == null) {
+                MemberLocation.create(member, request.latitude(), request.longitude());
+                memberLocationRepository.save(memberLocation);
+            } else {
+                memberLocation.update(request.latitude(), request.longitude());
+            }
+        }
 
         return profileConverter.toProfileUpdateResponse(member);
     }
@@ -122,10 +135,12 @@ public class ProfileService {
         Member me = getMember(memberId);
         Member target = getMember(targetMemberId);
 
+        MemberLocation myLocation = memberLocationRepository.findByMember(me).orElse(null);
+        MemberLocation targetLocation = memberLocationRepository.findByMember(target).orElse(null);
         // 나와의 거리 계산
         String distance = calculateDistance(
-                me.getLatitude(), me.getLongitude(),
-                target.getLatitude(), target.getLongitude()
+                myLocation.getLatitude(), myLocation.getLongitude(),
+                targetLocation.getLatitude(), targetLocation.getLongitude()
         );
 
         Preference preference = preferenceRepository.findById(target.getId()).orElse(null);
@@ -137,6 +152,40 @@ public class ProfileService {
         return profileConverter.toOtherProfileResponse(target, interests, preference, distance);
     }
 
+    public void toggleEvaluation(Long fromId, Long toId, EvaluationType type) {
+        Member from = getMember(fromId);
+        Member to = getMember(toId);
+
+        Evaluation existing = evaluationRepository.findByFromMemberAndToMember(from, to)
+                .orElse(null);
+
+        // 없는 경우
+        if (existing == null) {
+            evaluationRepository.save(new Evaluation(from, to, type));
+
+            if (type == EvaluationType.RECOMMEND) to.increaseRecommend();
+            else to.increaseNotRecommend();
+
+            // 있음 -> 깉은 버튼 클릭 -> 취소
+        } else if (existing.getType() == type) {
+            evaluationRepository.delete(existing);
+
+            if (type == EvaluationType.RECOMMEND) to.decreaseRecommend();
+            else to.decreaseNotRecommend();
+
+            // 있음 -> 다른 버튼 클릭 switch ex) 추천 눌려있는데 비추천 누르는 경우
+        } else {
+            // 기존꺼 취소
+            if (existing.getType() == EvaluationType.RECOMMEND) to.decreaseRecommend();
+            else to.decreaseNotRecommend();
+
+            // 새것 적용
+            if (type == EvaluationType.RECOMMEND) to.increaseRecommend();
+            else to.increaseNotRecommend();
+
+            existing.updateType(type);
+        }
+    }
 
     // 사용자 찾기 공통 로직
     private Member getMember(Long memberId) {
@@ -144,7 +193,7 @@ public class ProfileService {
                 () -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
     }
 
-    // 나와의 거리 계산 메소
+    // 나와의 거리 계산 메소드
     private String calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
         if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
             return "알 수 없음"; // 좌표 없는 경우 처리

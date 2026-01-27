@@ -122,6 +122,17 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-
+    @Operation(summary = "추천/비추천 토글 API", description = "프로필에서 추천/비추천 토글기능입니다.")
+    @PostMapping("/evaluation/toggle")
+    public ResponseEntity<BasicResponse<String>> toggleEvaluation(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody EvaluationRequest request
+    ) {
+        Long memberId = customUserDetails.getMemberId();
+        profileService.toggleEvaluation(memberId, request.targetMemberId(), request.type());
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, "평가가 반영되었습니다."));
+    }
 }
 
