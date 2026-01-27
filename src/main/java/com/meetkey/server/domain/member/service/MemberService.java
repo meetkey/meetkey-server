@@ -23,6 +23,9 @@ public class MemberService {
     @Transactional
     public Member signup(Provider provider, String providerId, MemberReqDTO.Signup req) {
         Member member = Member.builder()
+                .name(req.name())
+                .targetLanguage(req.targetLanguage())
+                .phoneNumber(req.phoneNumber())
                 .gender(req.gender())
                 .birthday(req.birthday())
                 .firstLanguage(req.firstLanguage())
@@ -43,9 +46,12 @@ public class MemberService {
     }
 
     @Transactional
-    public Member devSignup(Provider provider, String providerId, MemberReqDTO.Signup req) {
+    public Member devSignup(Provider provider, String providerId, MemberReqDTO.Signup req, String name) {
         Member member = Member.builder()
                 .gender(req.gender())
+                .name(name)
+                .targetLanguage(req.targetLanguage())
+                .phoneNumber(req.phoneNumber())
                 .birthday(req.birthday())
                 .firstLanguage(req.firstLanguage())
                 .homeTown(req.homeTown())

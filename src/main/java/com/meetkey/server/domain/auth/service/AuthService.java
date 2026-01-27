@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -44,11 +45,12 @@ public class AuthService {
 
     @Transactional
     public JwtResDTO.JwtResponse devSignup(OauthReqDTO.SignupReq req){
-        String providerId = "000000000";
+        String providerId = UUID.randomUUID().toString();
         Provider provider = Provider.KAKAO;
+        String name = "dev_" + UUID.randomUUID().toString();
 
         MemberReqDTO.Signup memberReqDTO = OauthConverter.toMemberSignUpDTO(req);
-        Member member = memberService.devSignup(provider, providerId, memberReqDTO);
+        Member member = memberService.devSignup(provider, providerId, memberReqDTO, name);
 
         return getDevJwtResponseDTO(member);
     }
