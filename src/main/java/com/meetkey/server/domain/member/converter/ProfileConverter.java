@@ -18,8 +18,8 @@ import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 public class ProfileConverter {
 
     // 프로필 수정 변환
-    public ProfileResponse toProfileRes(Member member) {
-        return ProfileResponse.builder()
+    public ProfileUpdateResponse toProfileUpdateResponse(Member member) {
+        return ProfileUpdateResponse.builder()
                 .memberId(member.getId())
                 .name(member.getName())
                 .age(member.getAge())
@@ -113,6 +113,31 @@ public class ProfileConverter {
                 .meetingType(preference.getMeetingType())
                 .friendType(preference.getFriendType())
                 .relationType(preference.getRelationType())
+                .build();
+    }
+
+    // 내 프로필 조회
+    public MyProfileResponse toProfileResponse(
+            Member member,
+            List<Interest> interests,
+            Preference personality
+    ) {
+        List<String> interestNames = interests.stream()
+                .map(interest -> interest.getType().name())
+                .toList();
+
+        return MyProfileResponse.builder()
+                .memberId(member.getId())
+                .name(member.getName())
+                .first(member.getFirstLanguage())
+                .target(member.getTargetLanguage())
+                .age(member.getAge())
+                .profileImage("image")
+                .recommendCount(0)
+                .notRecommendCount(0)
+                .interests(interestNames)
+                .personalities(toPersonalityUpdateResponse(personality))
+                .bio(member.getBio())
                 .build();
     }
 }

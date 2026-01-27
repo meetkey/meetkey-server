@@ -33,19 +33,19 @@ public class ProfileService {
     private final InterestMemberRepository interestMemberRepository;
     private final PreferenceRepository preferenceRepository;
 
-    public ProfileResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
+    public ProfileUpdateResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
 
         member.updateProfileInfo(request.location(), request.bio(), request.first(), request.target(), request.level());
 
-        return profileConverter.toProfileRes(member);
+        return profileConverter.toProfileUpdateResponse(member);
     }
 
     @Transactional(readOnly = true)
-    public ProfileResponse getMyProfile(Long memberId) {
+    public ProfileUpdateResponse getMyUpdateProfile(Long memberId) {
         Member member = getMember(memberId);
 
-        return profileConverter.toProfileRes(member);
+        return profileConverter.toProfileUpdateResponse(member);
     }
 
     public InterestResponse updateInterests(Long memberId, List<InterestType> interestNames) {
@@ -102,11 +102,27 @@ public class ProfileService {
         return profileConverter.toPersonalityUpdateResponse(preference);
     }
 
+    @Transactional(readOnly = true)
+    public MyProfileResponse getMyProfile(Long memberId) {
+        Member member = getMember(memberId);
+
+        Preference preference = preferenceRepository.findById(memberId).orElse(null);
+
+        List<InterestMember> interestMembers = interestMemberRepository.findAllByMember(member);
+        List<Interest> interests = interestMembers.stream()
+                .map(InterestMember::getInterest)
+                .toList();
+
+        return profileConverter.toProfileResponse(member, interests, preference);
+    }
+
 
     // 사용자 찾기 공통 로직
     private Member getMember(Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(
                 () -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
     }
+
+
 
 }

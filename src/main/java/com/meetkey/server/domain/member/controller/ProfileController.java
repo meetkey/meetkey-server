@@ -22,13 +22,13 @@ public class ProfileController {
 
     @Operation(summary = "프로필 수정 API", description = "사용자의 위치, 한줄 소개를 변경합니다.")
     @PatchMapping("/me/profile")
-    public ResponseEntity<BasicResponse<ProfileResponse>> updateProfile(
+    public ResponseEntity<BasicResponse<ProfileUpdateResponse>> updateProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody ProfileUpdateRequest request
     ) {
 
         Long memberId = customUserDetails.getMemberId();
-        ProfileResponse response = profileService.updateProfile(memberId, request);
+        ProfileUpdateResponse response = profileService.updateProfile(memberId, request);
 
         return ResponseEntity
                 .ok()
@@ -37,12 +37,12 @@ public class ProfileController {
 
     @Operation(summary = "프로필 수정 시 조회 API", description = "이름, 나이, 위치, 한줄 소개를 조회합니다.")
     @GetMapping("/me/profile")
-    public ResponseEntity<BasicResponse<ProfileResponse>> getProfile(
+    public ResponseEntity<BasicResponse<ProfileUpdateResponse>> getProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
 
         Long memberId = customUserDetails.getMemberId();
-        ProfileResponse response = profileService.getMyProfile(memberId);
+        ProfileUpdateResponse response = profileService.getMyUpdateProfile(memberId);
 
         return ResponseEntity
                 .ok()
@@ -87,6 +87,20 @@ public class ProfileController {
         Long memberId = customUserDetails.getMemberId();
 
         PersonalityUpdateResponse response = profileService.updatePersonality(memberId, request);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, response));
+    }
+
+    @Operation(summary = "프로필 조회 API", description = "내 프로필을 조회합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<BasicResponse<MyProfileResponse>> getMyProfile(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        Long memberId = customUserDetails.getMemberId();
+
+        MyProfileResponse response = profileService.getMyProfile(memberId);
 
         return ResponseEntity
                 .ok()

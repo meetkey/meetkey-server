@@ -8,7 +8,7 @@ import java.util.List;
 public class ProfileResDTO {
 
     @Builder
-    public record ProfileResponse(
+    public record ProfileUpdateResponse(
             Long memberId,
             String name,
             int age,
@@ -60,6 +60,29 @@ public class ProfileResDTO {
             ChatType chatType,
             FriendType friendType,
             RelationType relationType
+    ) {}
+
+    @Builder
+    public record MyProfileResponse(
+            // 헤더부분
+            Long memberId,
+            String name,
+            Language first,
+            Language target,
+            int age,
+            String profileImage,
+
+            // 평판
+            int recommendCount,
+            int notRecommendCount,
+
+            // 관심사
+            List<String> interests,
+
+            // 성향
+            PersonalityUpdateResponse personalities,
+
+            String bio
     ) {}
 
 }
