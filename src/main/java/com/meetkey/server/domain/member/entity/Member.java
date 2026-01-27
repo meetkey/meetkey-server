@@ -27,6 +27,9 @@ public class Member extends BaseEntity {
     @Builder.Default
     private Role role = Role.ROLE_USER;
 
+    @Column(nullable = false)
+    private String name;
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
@@ -35,6 +38,10 @@ public class Member extends BaseEntity {
 
     @Builder.Default
     private boolean isVerified = false;
+
+    private String location;
+
+    private String bio;
 
     @Enumerated(EnumType.STRING)
     private HomeTown homeTown;
@@ -57,6 +64,12 @@ public class Member extends BaseEntity {
     @Column(unique = true, length = 20)
     private String phoneNumber;
 
+    @Column(nullable = false)
+    private Integer recommendCount = 0;
+
+    @Column(nullable = false)
+    private Integer notRecommendCount = 0;
+
     private String refreshToken;
     private LocalDateTime refreshTokenExpiration;
 
@@ -71,4 +84,36 @@ public class Member extends BaseEntity {
         this.refreshToken = newRefreshToken;
         this.refreshTokenExpiration = LocalDateTime.now().plusNanos(expMillis);
     }
+
+    // 프로필 업데이트
+    public void updateProfileInfo(String location, String bio, Language first, Language target, Level level) {
+        this.location = location;
+        this.bio = bio;
+        this.firstLanguage = first;
+        this.targetLanguage = target;
+        this.targetLanguageLevel = level;
+    }
+
+    // 나이 계산 로직
+    public int getAge() {
+        if (this.birthday == null) return 0;
+        return LocalDate.now().getYear() - this.birthday.getYear() + 1;
+    }
+
+    public void increaseRecommend() {
+        this.recommendCount++;
+    }
+
+    public void decreaseRecommend() {
+        if (this.recommendCount > 0) this.recommendCount--;
+    }
+
+    public void increaseNotRecommend() {
+        this.notRecommendCount++;
+    }
+
+    public void decreaseNotRecommend() {
+        if (this.notRecommendCount > 0) this.notRecommendCount--;
+    }
+
 }

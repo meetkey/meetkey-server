@@ -21,4 +21,17 @@ public class MemberLocation {
     @ManyToOne
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public static MemberLocation create(Member member, Double latitude, Double longitude) {
+        return MemberLocation.builder()
+                .member(member)
+                .latitude(latitude)
+                .longitude(longitude)
+                .build();
+    }
+
+    public void update(Double latitude, Double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
 }
