@@ -9,13 +9,11 @@ import java.util.List;
 
 public class OauthReqDTO {
     public record LoginReq(
-            @NotNull String idToken,
-            @NotNull String nonce
+            @NotNull String idToken
     ){}
 
     public record SignupReq(
             @NotNull String idToken,
-            @NotNull String nonce,
 
             @NotNull @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthday,
             @NotNull Gender gender,
