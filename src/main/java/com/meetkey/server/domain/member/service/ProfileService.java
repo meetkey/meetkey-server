@@ -48,14 +48,16 @@ public class ProfileService {
         if (request.latitude() != null && request.longitude() != null) {
             MemberLocation memberLocation = memberLocationRepository.findByMember(member)
                     .orElse(null);
+
             if (memberLocation == null) {
-                MemberLocation.create(member, request.latitude(), request.longitude());
-                memberLocationRepository.save(memberLocation);
+                MemberLocation newMemberLocation = MemberLocation.create(member, request.latitude(), request.longitude());
+                memberLocationRepository.save(newMemberLocation);
             } else {
                 memberLocation.update(request.latitude(), request.longitude());
             }
         }
 
+        badgeService.checkProfileCompletion(memberId);
         return profileConverter.toProfileUpdateResponse(member);
     }
 
@@ -195,6 +197,8 @@ public class ProfileService {
 
             existing.updateType(type);
         }
+
+        badgeService.checkPositiveEvaluation(toId);
     }
 
     // 사용자 찾기 공통 로직
