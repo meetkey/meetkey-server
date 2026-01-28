@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.member.converter;
 
+import com.meetkey.server.domain.badge.dto.BadgeResDTO;
 import com.meetkey.server.domain.member.entity.Interest;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.Preference;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.meetkey.server.domain.badge.dto.BadgeResDTO.*;
 import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 
 @Component
@@ -120,7 +122,8 @@ public class ProfileConverter {
     public MyProfileResponse toProfileResponse(
             Member member,
             List<Interest> interests,
-            Preference personality
+            Preference personality,
+            BadgeResponse badge
     ) {
         List<String> interestNames = interests.stream()
                 .map(interest -> interest.getType().name())
@@ -133,8 +136,9 @@ public class ProfileConverter {
                 .target(member.getTargetLanguage())
                 .age(member.getAge())
                 .profileImage("image")
-                .recommendCount(0)
-                .notRecommendCount(0)
+                .recommendCount(member.getRecommendCount())
+                .notRecommendCount(member.getNotRecommendCount())
+                .badge(badge)
                 .interests(interestNames)
                 .personalities(toPersonalityUpdateResponse(personality))
                 .bio(member.getBio())
@@ -146,7 +150,8 @@ public class ProfileConverter {
             Member member,
             List<Interest> interests,
             Preference personality,
-            String distance
+            String distance,
+            BadgeResponse badge
     ) {
         List<String> interestNames = interests.stream()
                 .map(interest -> interest.getType().name())
@@ -161,8 +166,9 @@ public class ProfileConverter {
                 .profileImage("image")
                 .location(member.getLocation())
                 .distance(distance)
-                .recommendCount(0)
-                .notRecommendCount(0)
+                .recommendCount(member.getRecommendCount())
+                .notRecommendCount(member.getNotRecommendCount())
+
                 .first(member.getFirstLanguage())
                 .target(member.getTargetLanguage())
                 .level(member.getTargetLanguageLevel())

@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.badge.entity;
 
+import com.meetkey.server.domain.badge.enums.BadgeLevel;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
@@ -24,5 +25,7 @@ public class Badge extends BaseEntity {
     private int total_score = 0;
 
     @Column(nullable = false)
-    private String tier; // enum 으로 추후 변경
+    @Enumerated(EnumType.STRING)
+    private BadgeLevel level;
+
 }

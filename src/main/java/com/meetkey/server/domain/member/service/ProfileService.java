@@ -1,5 +1,7 @@
 package com.meetkey.server.domain.member.service;
 
+import com.meetkey.server.domain.badge.dto.BadgeResDTO;
+import com.meetkey.server.domain.badge.service.BadgeService;
 import com.meetkey.server.domain.member.converter.ProfileConverter;
 import com.meetkey.server.domain.member.entity.Interest;
 import com.meetkey.server.domain.member.entity.Member;
@@ -13,12 +15,14 @@ import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.meetkey.server.domain.badge.dto.BadgeResDTO.*;
 import static com.meetkey.server.domain.member.dto.ProfileReqDTO.*;
 import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 
@@ -34,6 +38,7 @@ public class ProfileService {
     private final PreferenceRepository preferenceRepository;
     private final MemberLocationRepository memberLocationRepository;
     private final EvaluationRepository evaluationRepository;
+    private final BadgeService badgeService;
 
     public ProfileUpdateResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
@@ -43,14 +48,16 @@ public class ProfileService {
         if (request.latitude() != null && request.longitude() != null) {
             MemberLocation memberLocation = memberLocationRepository.findByMember(member)
                     .orElse(null);
+
             if (memberLocation == null) {
-                MemberLocation.create(member, request.latitude(), request.longitude());
-                memberLocationRepository.save(memberLocation);
+                MemberLocation newMemberLocation = MemberLocation.create(member, request.latitude(), request.longitude());
+                memberLocationRepository.save(newMemberLocation);
             } else {
                 memberLocation.update(request.latitude(), request.longitude());
             }
         }
 
+        badgeService.checkProfileCompletion(memberId);
         return profileConverter.toProfileUpdateResponse(member);
     }
 
@@ -92,7 +99,7 @@ public class ProfileService {
     public PersonalityUpdateResponse updatePersonality(Long memberId, PersonalityUpdateRequest request) {
         Member member = getMember(memberId);
 
-        Preference preference = preferenceRepository.findById(member.getId()).orElse(null);
+        Preference preference = getPreference(member);
         if (preference == null) {
              preference = Preference.create(
                     member,
@@ -119,14 +126,16 @@ public class ProfileService {
     public MyProfileResponse getMyProfile(Long memberId) {
         Member member = getMember(memberId);
 
-        Preference preference = preferenceRepository.findById(member.getId()).orElse(null);
+        Preference preference = getPreference(member);
+
+        BadgeResponse badge = badgeService.getBadgeSummary(member.getId());
 
         List<InterestMember> interestMembers = interestMemberRepository.findAllByMember(member);
         List<Interest> interests = interestMembers.stream()
                 .map(InterestMember::getInterest)
                 .toList();
 
-        return profileConverter.toProfileResponse(member, interests, preference);
+        return profileConverter.toProfileResponse(member, interests, preference, badge);
     }
 
     // 다른 사람 프로필 조회
@@ -143,14 +152,17 @@ public class ProfileService {
                 targetLocation.getLatitude(), targetLocation.getLongitude()
         );
 
-        Preference preference = preferenceRepository.findById(target.getId()).orElse(null);
+        Preference preference = getPreference(target);
+        BadgeResponse badge = badgeService.getBadgeSummary(target.getId());
         List<InterestMember> interestMembers = interestMemberRepository.findAllByMember(target);
         List<Interest> interests = interestMembers.stream()
                 .map(InterestMember::getInterest)
                 .toList();
 
-        return profileConverter.toOtherProfileResponse(target, interests, preference, distance);
+        return profileConverter.toOtherProfileResponse(target, interests, preference, distance, badge);
     }
+
+
 
     public void toggleEvaluation(Long fromId, Long toId, EvaluationType type) {
         Member from = getMember(fromId);
@@ -185,6 +197,8 @@ public class ProfileService {
 
             existing.updateType(type);
         }
+
+        badgeService.checkPositiveEvaluation(toId);
     }
 
     // 사용자 찾기 공통 로직
@@ -211,5 +225,11 @@ public class ProfileService {
         // 소수점 첫째 자리까지 포맷팅 (예: "2.5km")
         return String.format("%.1fkm", dist);
 
+    }
+
+    // 선호도 찾기 공통 로직
+    @Nullable
+    private Preference getPreference(Member member) {
+        return preferenceRepository.findById(member.getId()).orElse(null);
     }
 }

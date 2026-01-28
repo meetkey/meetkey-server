@@ -2,6 +2,11 @@ package com.meetkey.server.domain.auth.service;
 
 import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
 import com.meetkey.server.domain.auth.exception.AuthException;
+import com.meetkey.server.domain.badge.service.BadgeService;
+import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.exception.MemberErrorStatus;
+import com.meetkey.server.domain.member.exception.MemberException;
+import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.global.sms.SmsUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,17 +17,24 @@ import net.nurigo.sdk.message.service.DefaultMessageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class SmsService {
 
+    private final MemberRepository memberRepository;
+
     private final DefaultMessageService messageService;
+    private final BadgeService badgeService;
+
     private final SmsUtil smsUtil;
     private final StringRedisTemplate redisTemplate;
+
 
     @Value("${coolsms.sender}")
     private String sender;
@@ -73,4 +85,18 @@ public class SmsService {
             throw new AuthException(AuthErrorStatus.VERIFY_FAILED);
         }
     }
+
+    // 검증 및 포인트 지급
+    public void completeAuthentication(Long memberId, String phone, String inputCode) {
+        verifyAuthCode(phone, inputCode);
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+
+        member.updateCertificated();
+
+        badgeService.checkAuthentication(member.getId());
+    }
+
+
 }

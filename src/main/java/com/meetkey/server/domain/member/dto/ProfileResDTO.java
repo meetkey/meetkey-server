@@ -1,9 +1,12 @@
 package com.meetkey.server.domain.member.dto;
 
+import com.meetkey.server.domain.badge.dto.BadgeResDTO;
 import com.meetkey.server.domain.member.enums.*;
 import lombok.Builder;
 
 import java.util.List;
+
+import static com.meetkey.server.domain.badge.dto.BadgeResDTO.*;
 
 public class ProfileResDTO {
 
@@ -75,6 +78,7 @@ public class ProfileResDTO {
             // 평판
             int recommendCount,
             int notRecommendCount,
+            BadgeResponse badge,
 
             // 관심사
             List<String> interests,
@@ -100,6 +104,8 @@ public class ProfileResDTO {
             // 평판
             int recommendCount,
             int notRecommendCount,
+
+            BadgeResponse badge,
 
             Language first,
             Language target,
