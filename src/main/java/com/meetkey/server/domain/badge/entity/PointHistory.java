@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.badge.entity;
 
+import com.meetkey.server.domain.badge.enums.ReasonType;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
@@ -24,5 +25,6 @@ public class PointHistory extends BaseEntity {
     private int changeAmount;
 
     @Column(nullable = false)
-    private String reasonType; // 추후 enum 변경
+    @Enumerated(EnumType.STRING)
+    private ReasonType reasonType;
 }
