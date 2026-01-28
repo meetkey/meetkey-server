@@ -25,16 +25,26 @@ public class BadgeService {
     private final PointHistoryRepository pointHistoryRepository;
     private final BadgeConverter badgeConverter;
 
-    // 뱃지 정보 조회
+    // 뱃지 정보 조회 (내역 포함)
     @Transactional(readOnly = true)
-    public BadgeResponse getBadgeInfo(Long memberId) {
+    public BadgeResponse getBadgeDetail(Long memberId) {
         Member member = getMember(memberId);
 
         int totalScore = pointHistoryRepository.calculateTotalScore(member);
 
         List<PointHistory> histories = pointHistoryRepository.findAllByMemberOrderByCreatedAtDesc(member);
 
-        return badgeConverter.toBadgeResponse(totalScore, histories);
+        return badgeConverter.toBadgeResponseDetail(totalScore, histories);
+    }
+
+    // 뱃지 정보 조회(내역 미포함)
+    @Transactional(readOnly = true)
+    public BadgeResponse getBadgeSummary(Long memberId) {
+        Member member = getMember(memberId);
+
+        int totalScore = pointHistoryRepository.calculateTotalScore(member);
+
+        return badgeConverter.toBadgeResponseSummary(totalScore);
     }
 
     // 점수 부여
