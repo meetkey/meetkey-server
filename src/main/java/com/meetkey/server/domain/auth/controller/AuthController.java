@@ -30,6 +30,7 @@ public class AuthController {
     private final AuthService authService;
     private final SmsService smsService;
 
+
     @Value("${admin.secret}")
     private String adminSecret;
 
@@ -94,15 +95,17 @@ public class AuthController {
     @Operation(summary = "인증번호 검증 API", description = "인증번호가 일치하는지 검증합니다. (인증시간 180초)")
     @PostMapping("/sms/verify")
     public ResponseEntity<BasicResponse<Boolean>> verifyAuthCode(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam String phone,
             @RequestParam String code
     ) {
-        smsService.verifyAuthCode(phone, code);
+
+        Long memberId = customUserDetails.getMemberId();
+        smsService.completeAuthentication(memberId, phone, code);
 
         return ResponseEntity
                 .ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, true));
-
     }
 
 }

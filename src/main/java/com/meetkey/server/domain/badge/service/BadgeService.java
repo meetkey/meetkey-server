@@ -41,13 +41,67 @@ public class BadgeService {
     public void rewardPoints(Long memberId, ReasonType reasonType) {
         Member member = getMember(memberId);
 
-        PointHistory pointHistory = PointHistory.builder()
-                .member(member)
-                .reasonType(reasonType)
-                .changeAmount(reasonType.getDefaultScore())
-                .build();
+        if (pointHistoryRepository.existsByMemberAndReasonType(member, reasonType)) {
+            return;
+        }
 
-        pointHistoryRepository.save(pointHistory);
+        int currentTotalScore = pointHistoryRepository.calculateTotalScore(member);
+
+        // 100점 이상이라면 지급 X
+        if (currentTotalScore >= 100) {
+            return;
+        }
+
+        int pointsToAdd = reasonType.getDefaultScore();
+        int potentialScore = currentTotalScore + pointsToAdd;
+
+        // 더해서 100점 초과라면 일부만 지급
+        if (potentialScore > 100) {
+            pointsToAdd = 100 - currentTotalScore;
+        }
+
+        if (pointsToAdd > 0) {
+            PointHistory pointHistory = PointHistory.builder()
+                    .member(member)
+                    .reasonType(reasonType)
+                    .changeAmount(reasonType.getDefaultScore())
+                    .build();
+            pointHistoryRepository.save(pointHistory);
+        }
+
+    }
+
+    // 본인 인증
+    public void checkAuthentication(Long memberId) {
+        Member member = getMember(memberId);
+
+        if (Boolean.TRUE.equals(member.isVerified())) {
+            rewardPoints(member.getId(), ReasonType.AUTH);
+        }
+    }
+
+    // 프로필 작성
+    public void checkProfileCompletion(Long memberId) {
+        Member member = getMember(memberId);
+
+        boolean isComplete =
+                member.getLocation() != null &&
+                member.getFirstLanguage() != null &&
+                member.getTargetLanguage() != null &&
+                member.getTargetLanguageLevel() != null;
+
+        if (isComplete) {
+            rewardPoints(member.getId(), ReasonType.PROFILE);
+        }
+    }
+
+    // 긍적적인 평가
+    public void checkPositiveEvaluation(Long memberId) {
+        Member member = getMember(memberId);
+
+        if (member.getRecommendCount() >= 10) {
+            rewardPoints(member.getId(), ReasonType.POSITIVE);
+        }
     }
 
 

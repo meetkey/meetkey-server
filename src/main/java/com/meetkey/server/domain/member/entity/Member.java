@@ -118,4 +118,8 @@ public class Member extends BaseEntity {
         if (this.notRecommendCount > 0) this.notRecommendCount--;
     }
 
+    public void updateCertificated() {
+        this.isVerified = true;
+    }
+
 }
