@@ -5,6 +5,8 @@ services:
     ports:
       - "80:8080"
     environment:
+      SPRING_PROFILES_ACTIVE: prod
+      S3_BUCKET: ${S3_BUCKET}
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PW: ${DB_PW}

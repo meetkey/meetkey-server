@@ -47,6 +47,8 @@ jobs:
             cd /home/ec2-user/app
             
             # 환경변수 설정
+            export SPRING_PROFILES_ACTIVE=prod
+            export S3_BUCKET=${{ secrets.S3_BUCKET }}
             export IMAGE_TAG=${{ github.sha }}
             export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
             export DB_URL='${{ secrets.DB_URL }}'
