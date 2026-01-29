@@ -12,6 +12,8 @@ import com.meetkey.server.domain.member.entity.mapping.MemberLocation;
 import com.meetkey.server.domain.member.repository.MemberLikeRepository;
 import com.meetkey.server.domain.member.repository.MemberLocationRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
+import com.meetkey.server.domain.member.entity.Preference;
+import com.meetkey.server.domain.member.repository.PreferenceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +36,7 @@ public class MatchServiceImpl implements MatchService {
     private final MemberLikeRepository memberLikeRepository;
     private final MemberLocationRepository memberLocationRepository;
     private final MemberRepository memberRepository;
+    private final PreferenceRepository preferenceRepository;
     private final RecommendationQueueRepository recommendationQueueRepository;
 
     @Override
@@ -91,13 +95,19 @@ public class MatchServiceImpl implements MatchService {
         List<Member> candidates = matchRepository.findRecommendableMembers(member, request, excludedIds, 100);
 
         // 3. 소프트 스코어링 (점수 계산)
-        // 3. 소프트 스코어링 (점수 계산)
         MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
-        // Preference myPreference = preferenceRepository.findByMember(member).orElse(null); // 생략
+        Preference myPreference = preferenceRepository.findById(member.getId()).orElse(null);
+
+        // 후보자들의 Preference 일괄 조회
+        List<Long> candidateIds = candidates.stream().map(Member::getId).collect(Collectors.toList());
+        List<Preference> preferences = preferenceRepository.findAllById(candidateIds);
+        Map<Long, Preference> prefMap = preferences.stream()
+            .collect(Collectors.toMap(p -> p.getMember().getId(), p -> p));
 
         List<MemberScore> scoredCandidates = candidates.stream()
             .map(candidate -> {
-                double score = calculateScore(member, myLocation, candidate);
+                Preference targetPref = prefMap.get(candidate.getId());
+                double score = calculateScore(member, myLocation, myPreference, candidate, targetPref);
                 return new MemberScore(candidate, score);
             })
             .sorted((p1, p2) -> Double.compare(p2.score, p1.score))
@@ -111,9 +121,15 @@ public class MatchServiceImpl implements MatchService {
             List<Long> allExcluded = new ArrayList<>(excludedIds);
             allExcluded.addAll(currentIds);
 
-            List<Member> randomMembers = matchRepository.findRandomMembers(member, request, allExcluded, needed);
+            List<Member> randomMembers = matchRepository.findRandomMembers(member, request, allExcluded, needed); // 랜덤 멤버는 Preference 점수 0 처리 (또는 조회 로직 추가 필요)
 
-            randomMembers.forEach(rm -> scoredCandidates.add(new MemberScore(rm, 0.0)));
+            randomMembers.forEach(rm -> {
+                // 랜덤 멤버의 Preference 조회 (개별 조회 허용 or 추가 벌크 조회) - 여기선 개별 조회
+                // Preference randomPref = preferenceRepository.findById(rm.getId()).orElse(null);
+                // scoredCandidates.add(new MemberScore(rm, 0.0)); // 점수는 0
+                // DTO 변환 시 필요하므로, 일단 점수 매기는 로직에 넣지 말고 0으로 하고, DTO 변환 시 조회하도록 함.
+                scoredCandidates.add(new MemberScore(rm, 0.0));
+            });
         }
 
         // 4. 큐에 저장
@@ -123,18 +139,24 @@ public class MatchServiceImpl implements MatchService {
                 .targetMember(ms.member())
                 .score(ms.score())
                 .isSwiped(false)
-                .isRecycled(false) // 재활용 로직 필요 시 반영
+                .isRecycled(false)
                 .build())
             .collect(Collectors.toList());
 
         recommendationQueueRepository.saveAll(queueEntities);
 
         return scoredCandidates.stream()
-            .map(ms -> convertToDTO(ms.member))
+            .map(ms -> {
+                // 백필된 멤버의 경우 prefMap에 없을 수 있음
+                Preference targetPref = prefMap.containsKey(ms.member().getId()) ? 
+                                        prefMap.get(ms.member().getId()) : 
+                                        preferenceRepository.findById(ms.member().getId()).orElse(null);
+                return convertToDTO(ms.member(), targetPref);
+            })
             .collect(Collectors.toList());
     }
 
-    private double calculateScore(Member me, MemberLocation myLoc, Member target) {
+    private double calculateScore(Member me, MemberLocation myLoc, Preference myPref, Member target, Preference targetPref) {
         double score = 0;
 
         // 1. 언어 점수 (최대 +5점)
@@ -146,12 +168,15 @@ public class MatchServiceImpl implements MatchService {
         else if (me.getTargetLanguage() == target.getTargetLanguage()) score += 1;
 
         // 2. 성격 점수 (최대 +5점)
-        if (me.getTargetLanguage() == target.getTargetLanguage()) score += 1;
+        if (myPref != null && targetPref != null) {
+            if (myPref.getSocialType() == targetPref.getSocialType()) score += 1;
+            if (myPref.getMeetingType() == targetPref.getMeetingType()) score += 1;
+            if (myPref.getChatType() == targetPref.getChatType()) score += 1;
+            if (myPref.getFriendType() == targetPref.getFriendType()) score += 1;
+            if (myPref.getRelationType() == targetPref.getRelationType()) score += 1;
+        }
 
-        // 2. 성격 (PreferenceRepository 제한으로 인해 일단 생략)
-        // if (myPref != null) {  }
-
-        // 3. Interests (+N)
+        // 3. 관심사 점수 (+N점)
 
         // 3. 관심사 점수 (+N점)
         List<String> myInterests = me.getInterestMembers().stream()
@@ -194,12 +219,24 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private RecommendationResDTO convertToDTO(Member member) {
+        // Recycle 모드 등 단일 조회 시 사용
+        Preference pref = preferenceRepository.findById(member.getId()).orElse(null);
+        return convertToDTO(member, pref);
+    }
+
+    private RecommendationResDTO convertToDTO(Member member, Preference pref) {
         int age = member.getBirthday() != null ? LocalDate.now().getYear() - member.getBirthday().getYear() + 1 : 0;
 
-        // DTO 변환 시 Preference 정보 필요
-        // (일단 생략)
-        // PreferenceRepository 사용 안 함.
         RecommendationResDTO.PersonalityDTO personalityDTO = null;
+        if (pref != null) {
+            personalityDTO = RecommendationResDTO.PersonalityDTO.builder()
+                .socialType(pref.getSocialType())
+                .meetingType(pref.getMeetingType())
+                .chatType(pref.getChatType())
+                .friendType(pref.getFriendType())
+                .relationType(pref.getRelationType())
+                .build();
+        }
 
         // 관심사 목록 조회
         List<String> interests = member.getInterestMembers().stream()
