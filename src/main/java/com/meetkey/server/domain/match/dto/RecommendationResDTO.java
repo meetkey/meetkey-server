@@ -1,7 +1,6 @@
 package com.meetkey.server.domain.match.dto;
 
-import com.meetkey.server.domain.member.enums.Gender;
-import com.meetkey.server.domain.member.enums.HomeTown;
+import com.meetkey.server.domain.member.enums.*;
 import lombok.Builder;
 
 import java.util.List;
@@ -23,18 +22,18 @@ public record RecommendationResDTO(
 ) {
     @Builder
     public record LanguageDTO(
-        com.meetkey.server.domain.member.enums.Language language,
-        com.meetkey.server.domain.member.enums.Level level
+        Language language,
+        Level level
     ) {
     }
 
     @Builder
     public record PersonalityDTO(
-        com.meetkey.server.domain.member.enums.SocialType socialType,
-        com.meetkey.server.domain.member.enums.MeetingType meetingType,
-        com.meetkey.server.domain.member.enums.ChatType chatType,
-        com.meetkey.server.domain.member.enums.FriendType friendType,
-        com.meetkey.server.domain.member.enums.RelationType relationType
+        SocialType socialType,
+        MeetingType meetingType,
+        ChatType chatType,
+        FriendType friendType,
+        RelationType relationType
     ) {
     }
 }

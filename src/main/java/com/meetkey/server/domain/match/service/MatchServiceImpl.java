@@ -1,8 +1,10 @@
 package com.meetkey.server.domain.match.service;
 
 import com.meetkey.server.domain.match.dto.*;
+import com.meetkey.server.domain.match.entity.RecommendationQueue;
 import com.meetkey.server.domain.match.enums.MatchType;
 import com.meetkey.server.domain.match.repository.MatchRepository;
+import com.meetkey.server.domain.match.repository.RecommendationQueueRepository;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.mapping.FromToId;
 import com.meetkey.server.domain.member.entity.mapping.MemberLike;
@@ -10,14 +12,13 @@ import com.meetkey.server.domain.member.entity.mapping.MemberLocation;
 import com.meetkey.server.domain.member.repository.MemberLikeRepository;
 import com.meetkey.server.domain.member.repository.MemberLocationRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
-import com.meetkey.server.domain.match.entity.RecommendationQueue;
-import com.meetkey.server.domain.match.repository.RecommendationQueueRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,59 +38,38 @@ public class MatchServiceImpl implements MatchService {
     @Override
     @Transactional
     public MatchListResDTO getRecommendations(Member member, RecommendationReqDTO request) {
-        // 1. 추천 큐 확인
-        List<RecommendationQueue> queue = recommendationQueueRepository.findAllByMemberAndIsSwipedFalse(member, Sort.by(Sort.Direction.DESC, "score"));
+        // 0. 기존 큐 초기화 (필터 변경 시 반영을 위해)
+        recommendationQueueRepository.deleteByMemberAndIsSwipedFalse(member);
 
-        if (!queue.isEmpty()) {
-            boolean isRecycled = queue.get(0).getIsRecycled();
-            MatchType currentType = isRecycled ? MatchType.RECYCLE : MatchType.DAILY_MATCH;
-            List<RecommendationResDTO> dtos = queue.stream()
-                .map(q -> convertToDTO(q.getTargetMember()))
+        // 1. 금일 스와이프 횟수 확인 (일일 제한 10명)
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        long todaySwipes = memberLikeRepository.countByFromMemberAndCreatedAtBetween(member, startOfDay, endOfDay);
+        int remainingQuota = Math.max(0, 10 - (int) todaySwipes);
+
+        // 2. 분기 처리: 일일 할당량 남음 vs 소진 (Recycle)
+        if (remainingQuota > 0) {
+            // A. Daily Match Mode (새로울 후보 생성)
+            // 할당량(remainingQuota)만큼만 생성
+            List<RecommendationResDTO> newRecommendations = generateRecommendations(member, request, remainingQuota);
+            return buildResponse(newRecommendations, newRecommendations.size(), MatchType.DAILY_MATCH);
+
+        } else {
+            // B. Recycle Mode (할당량 소진 시)
+            // 재활용 대상: DISLIKE 했거나, LIKE 했지만 채팅 시작 안 한 유저
+            List<Member> recycleMembers = memberLikeRepository.findRecycleMembers(member);
+
+            // 랜덤으로 섞어서 반환 (또는 최신순 등)
+            Collections.shuffle(recycleMembers);
+            List<Member> limitedRecycle = recycleMembers.stream().limit(10).toList();
+
+            // 여기서는 단순 조회로 반환
+            List<RecommendationResDTO> dtos = limitedRecycle.stream()
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
-            return buildResponse(dtos, queue.size(), currentType);
+
+            return buildResponse(dtos, dtos.size(), MatchType.RECYCLE);
         }
-
-        // 2. 재활용 시도 (이미 스와이프한 유저가 있다면)
-        List<RecommendationQueue> recycleCandidates = recommendationQueueRepository.findTop10ByMemberAndIsSwipedTrueAndIsRecycledFalseOrderByUpdateAtDesc(member);
-
-        // 이미 매칭된 유저는 제외
-        List<RecommendationQueue> validRecycle = new ArrayList<>();
-        for (RecommendationQueue item : recycleCandidates) {
-            Member target = item.getTargetMember();
-            // MemberLike 상태 확인
-            MemberLike interaction = memberLikeRepository.findById(new FromToId(member.getId(), target.getId())).orElse(null);
-
-            // 이미 매칭된 경우 스킵 (이미 성공한 관계)
-            if (interaction != null && interaction.getIsMatched() != null && interaction.getIsMatched()) {
-                continue;
-            }
-            validRecycle.add(item);
-        }
-
-        if (!validRecycle.isEmpty()) {
-            // 큐 아이템 상태를 재활용으로 업데이트
-            validRecycle.forEach(RecommendationQueue::recycle);
-            recommendationQueueRepository.saveAll(validRecycle);
-
-            List<RecommendationResDTO> dtos = validRecycle.stream()
-                .map(q -> convertToDTO(q.getTargetMember()))
-                .collect(Collectors.toList());
-            return buildResponse(dtos, validRecycle.size(), MatchType.RECYCLE);
-        }
-
-        // 3. 새로운 후보 생성 (하드 필터링 & 스코어링)
-        List<RecommendationResDTO> newRecommendations = generateRecommendations(member, request);
-        MatchType type = MatchType.DAILY_MATCH;
-
-        // 결과가 비어있으면 랜덤 또는 재활용 시도 (로직: 필터 결과 0명 -> 랜덤)
-        if (newRecommendations.isEmpty()) {
-            // 랜덤 유저 백필 (generateRecommendations 내부에서 이미 처리됨)
-        }
-
-        // 큐에 저장
-        // DB 저장은 일단 생략, 로직 반환에 집중
-
-        return buildResponse(newRecommendations, 10, type); // 총 개수 모킹
     }
 
     private MatchListResDTO buildResponse(List<RecommendationResDTO> list, int remaining, MatchType type) {
@@ -103,7 +83,7 @@ public class MatchServiceImpl implements MatchService {
             .build();
     }
 
-    private List<RecommendationResDTO> generateRecommendations(Member member, RecommendationReqDTO request) {
+    private List<RecommendationResDTO> generateRecommendations(Member member, RecommendationReqDTO request, int limit) {
         // 1. 기 스와이프 유저 제외
         List<Long> excludedIds = memberLikeRepository.findSwipedMemberIdsByMember(member);
 
@@ -113,7 +93,7 @@ public class MatchServiceImpl implements MatchService {
         // 3. 소프트 스코어링 (점수 계산)
         // 3. 소프트 스코어링 (점수 계산)
         MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
-        // Preference myPreference = preferenceRepository.findByMember(member).orElse(null); // Removed
+        // Preference myPreference = preferenceRepository.findByMember(member).orElse(null); // 생략
 
         List<MemberScore> scoredCandidates = candidates.stream()
             .map(candidate -> {
@@ -121,13 +101,12 @@ public class MatchServiceImpl implements MatchService {
                 return new MemberScore(candidate, score);
             })
             .sorted((p1, p2) -> Double.compare(p2.score, p1.score))
-            .limit(10)
-            .limit(10)
+            .limit(limit)
             .collect(Collectors.toList());
 
         // 10명 미만일 경우 랜덤 유저 백필 (엄격한 조건 적용)
-        if (scoredCandidates.size() < 10) {
-            int needed = 10 - scoredCandidates.size();
+        if (scoredCandidates.size() < limit) {
+            int needed = limit - scoredCandidates.size();
             List<Long> currentIds = scoredCandidates.stream().map(ms -> ms.member().getId()).collect(Collectors.toList());
             List<Long> allExcluded = new ArrayList<>(excludedIds);
             allExcluded.addAll(currentIds);
