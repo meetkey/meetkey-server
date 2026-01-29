@@ -72,12 +72,17 @@ public class Member extends BaseEntity {
     @Builder.Default
     private Integer notRecommendCount = 0;
 
+
+
+
+
     private String refreshToken;
     private LocalDateTime refreshTokenExpiration;
 
     /*
      * 관심사
      */
+    @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<InterestMember> interestMembers = new ArrayList<>();
 
