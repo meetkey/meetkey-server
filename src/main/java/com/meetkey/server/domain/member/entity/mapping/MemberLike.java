@@ -27,4 +27,10 @@ public class MemberLike extends BaseEntity {
 
     @Builder.Default
     private Boolean isMatched = false;
+
+    @Enumerated(EnumType.STRING)
+    private com.meetkey.server.domain.match.enums.Action action;
+
+    @Builder.Default
+    private Boolean isChatStarted = false;
 }

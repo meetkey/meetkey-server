@@ -1,4 +1,4 @@
-package com.meetkey.server.domain.recommend.entity;
+package com.meetkey.server.domain.match.entity;
 
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.global.common.BaseEntity;
@@ -29,4 +29,16 @@ public class RecommendationQueue extends BaseEntity {
 
     @Builder.Default
     private Boolean isSwiped = false;
+
+    @Builder.Default
+    private Boolean isRecycled = false;
+
+    public void markSwiped() {
+        this.isSwiped = true;
+    }
+
+    public void recycle() {
+        this.isSwiped = false;
+        this.isRecycled = true;
+    }
 }
