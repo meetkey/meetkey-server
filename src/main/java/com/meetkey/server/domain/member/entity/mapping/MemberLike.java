@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.member.entity.mapping;
 
+import com.meetkey.server.domain.match.enums.Action;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
@@ -27,4 +28,10 @@ public class MemberLike extends BaseEntity {
 
     @Builder.Default
     private Boolean isMatched = false;
+
+    @Enumerated(EnumType.STRING)
+    private Action action;
+
+    @Builder.Default
+    private Boolean isChatStarted = false;
 }

@@ -14,4 +14,9 @@ public class FromToId {
     private Long fromId;
     @Column(name = "to_id")
     private Long toId;
+
+    public FromToId(Long fromId, Long toId) {
+        this.fromId = fromId;
+        this.toId = toId;
+    }
 }
