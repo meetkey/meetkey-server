@@ -1,39 +1,10 @@
 spring:
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local} # 기본적으로 로컬 프로파일 활성화
 
-  jwt:
-    secret: ${JWT_SECRET_KEY:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
-
-  application:
-    name: server
-
-  datasource:
-    url: ${DB_URL:}
-    username: ${DB_USERNAME:}
-    password: ${DB_PW:}
-    driver-class-name: ${DB_DRIVER:}
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        format_sql: true
-
-coolsms:
-  api-key: ${COOLSMS_API_KEY:}
-  api-secret: ${COOLSMS_API_SECRET:}
-  sender: ${COOLSMS_SENDER:}
-
-admin:
-  secret: ${ADMIN_SECRET:1234}
-
-kakao:
-  app-key: ${KAKAO_APP_KEY:}
-
-apple:
-  app-key: ${APPLE_APP_KEY:}
+cloud:
+  aws:
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: ${S3_BUCKET:}
