@@ -18,27 +18,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtUtil jwtUtil, MemberService memberService) throws Exception {
         http
-                .csrf(csrf -> csrf.disable());
-
-        http
-                .formLogin(AbstractHttpConfigurer::disable);
-
-        http
-                .httpBasic(AbstractHttpConfigurer::disable);
-
-        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-        // JWT 필터 등록
-        http
-                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
-
-        http
-                .addFilterBefore(new CustomLogoutFilter(jwtUtil, memberService), LogoutFilter.class);
-
-
-        http
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new CustomLogoutFilter(jwtUtil, memberService), LogoutFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
@@ -47,9 +33,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/s3/**").permitAll()
                         .anyRequest().authenticated()
-                );
-
-        http.headers(headers -> headers
+                )
+                .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
         );
 
