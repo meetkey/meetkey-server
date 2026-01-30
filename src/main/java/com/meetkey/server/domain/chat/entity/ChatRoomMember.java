@@ -3,15 +3,13 @@ package com.meetkey.server.domain.chat.entity;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Builder
 @Table(name = "chat_room_member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -33,4 +31,13 @@ public class ChatRoomMember extends BaseEntity{
     private ChatMessage lastReadMsg;
 
     private LocalDateTime joinedAt;
+
+    public void updateLastReadMsg(ChatMessage lastReadMsg){
+        if (this.lastReadMsg != null &&
+                this.lastReadMsg.getId() >= lastReadMsg.getId()) {
+            return;
+        }
+
+        this.lastReadMsg = lastReadMsg;
+    }
 }
