@@ -1,0 +1,88 @@
+package com.meetkey.server.domain.chat.service.command;
+
+import com.meetkey.server.domain.chat.converter.ChatConverter;
+import com.meetkey.server.domain.chat.dto.request.ChatReqDTO;
+import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
+import com.meetkey.server.domain.chat.entity.ChatRoom;
+import com.meetkey.server.domain.chat.entity.ChatRoomMember;
+import com.meetkey.server.domain.chat.repository.ChatMessageRepository;
+import com.meetkey.server.domain.chat.repository.ChatRoomMemberRepository;
+import com.meetkey.server.domain.chat.repository.ChatRoomRepository;
+import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.repository.MemberRepository;
+import com.meetkey.server.global.apiPayload.exception.ChatException;
+import com.meetkey.server.global.apiPayload.exception.GeneralException;
+import com.meetkey.server.global.apiPayload.status.ChatErrorCode;
+import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ChatCommandService {
+
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final MemberRepository memberRepository;
+
+    // 채팅방 생성
+    public ChatResDTO.CreateChatRoomRes createChatRoom(ChatReqDTO.CreateChatRoomReq req, Long memberId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+        Member targetMember = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+
+        String directKey = makeDirectKey(memberId, req.targetUserId());
+        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByDirectKey(directKey);
+
+        // 채팅방 존재할 경우
+        if (optionalChatRoom.isPresent()) {
+            ChatRoom chatRoom = optionalChatRoom.get();
+            return ChatConverter.createChatRoomRes(chatRoom.getId(), chatRoom.getCreatedAt());
+        }
+
+        // 존재하지 않을 경우 생성
+        ChatRoom savedChatRoom = chatRoomRepository.save(ChatConverter.toChatRoom(directKey));
+        ChatRoomMember chatRoomMember = ChatConverter.toChatRoomMember(member, savedChatRoom, null);
+        ChatRoomMember chatRoomTargetMember = ChatConverter.toChatRoomMember(targetMember, savedChatRoom, null);
+        chatRoomMemberRepository.save(chatRoomMember);
+        chatRoomMemberRepository.save(chatRoomTargetMember);
+
+        return ChatConverter.createChatRoomRes(savedChatRoom.getId(), savedChatRoom.getCreatedAt());
+    }
+
+    // 채팅방 나가기
+    public void deleteChatRoom(Long memberId, Long chatRoomId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+        ChatRoomMember byMemberAndChatRoom = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+        chatRoomMemberRepository.delete(byMemberAndChatRoom);
+    }
+
+    // 메세지 읽음 처리
+    public void readMessages(Long memberId, Long chatRoomId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+        ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+        chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom)
+                .ifPresent(chatRoomMember::updateLastReadMsg);
+    }
+
+
+    private String makeDirectKey(Long a, Long b) {
+        return (a < b) ? a + ":" + b : b + ":" + a;
+    }
+
+}

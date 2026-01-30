@@ -43,6 +43,8 @@ public class Member extends BaseEntity {
 
     private String bio;
 
+    private String profileImageUrl;
+
     @Enumerated(EnumType.STRING)
     private HomeTown homeTown;
 
