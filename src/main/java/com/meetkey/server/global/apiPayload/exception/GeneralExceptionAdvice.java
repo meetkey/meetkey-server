@@ -5,6 +5,7 @@ import com.meetkey.server.global.apiPayload.code.BaseCode;
 import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -39,6 +40,22 @@ public class GeneralExceptionAdvice {
         
         return ResponseEntity.status(errorCode.getStatus())
                 .body(BasicResponse.error(errorCode, null));
+    }
+
+    // Validation 예외
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<BasicResponse<String>> handleValidationException(
+            MethodArgumentNotValidException e
+    ){
+        BaseCode errorCode = CommonErrorStatus._BAD_REQUEST;
+        String errorMessage = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(BasicResponse.<String>builder()
+                        .code(errorCode.getCode())
+                        .message(errorMessage)
+                        .data(null)
+                        .build());
     }
 
 }
