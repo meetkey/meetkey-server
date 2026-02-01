@@ -28,7 +28,7 @@ public class MatchController {
     @GetMapping("/recommendations")
     public BasicResponse<MatchListResDTO> getRecommendations(
         @AuthenticationPrincipal CustomUserDetails userDetails,
-        @ModelAttribute RecommendationReqDTO request
+        @ModelAttribute @Valid RecommendationReqDTO request
     ) {
         Member member = memberRepository.findById(userDetails.getMemberId())
             .orElseThrow(() -> new IllegalArgumentException("Invalid User ID"));

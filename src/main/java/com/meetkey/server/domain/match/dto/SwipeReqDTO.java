@@ -6,7 +6,10 @@ import lombok.Builder;
 
 @Builder
 public record SwipeReqDTO(
-    @NotNull Long targetMemberId,
-    @NotNull Action action
+    @NotNull(message = "타겟 유저 ID는 필수입니다.")
+    Long targetMemberId,
+
+    @NotNull(message = "Action(LIKE/DISLIKE)은 필수입니다.")
+    Action action
 ) {
 }

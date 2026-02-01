@@ -3,6 +3,8 @@ package com.meetkey.server.domain.match.service;
 import com.meetkey.server.domain.match.dto.*;
 import com.meetkey.server.domain.match.entity.RecommendationQueue;
 import com.meetkey.server.domain.match.enums.MatchType;
+import com.meetkey.server.domain.match.exception.MatchErrorStatus;
+import com.meetkey.server.domain.match.exception.MatchException;
 import com.meetkey.server.domain.match.repository.MatchRepository;
 import com.meetkey.server.domain.match.repository.RecommendationQueueRepository;
 import com.meetkey.server.domain.member.entity.Member;
@@ -113,19 +115,25 @@ public class MatchServiceImpl implements MatchService {
 
         // 1.5. 위치 정보 보정 (요청에 좌표 없고 DB에 있으면 DB 값 사용)
         MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
-        if (request.maxDistance() != null && (request.latitude() == null || request.longitude() == null) && myLocation != null) {
-            request = RecommendationReqDTO.builder()
-                .interests(request.interests())
-                .homeTown(request.homeTown())
-                .nativeLanguage(request.nativeLanguage())
-                .targetLanguage(request.targetLanguage())
-                .targetLanguageLevel(request.targetLanguageLevel())
-                .minAge(request.minAge())
-                .maxAge(request.maxAge())
-                .latitude(myLocation.getLatitude())
-                .longitude(myLocation.getLongitude())
-                .maxDistance(request.maxDistance())
-                .build();
+        if (request.maxDistance() != null) {
+            if ((request.latitude() == null || request.longitude() == null) && myLocation == null) {
+                throw new MatchException(MatchErrorStatus.LOCATION_NOT_FOUND);
+            }
+
+            if (request.latitude() == null || request.longitude() == null) {
+                request = RecommendationReqDTO.builder()
+                    .interests(request.interests())
+                    .homeTown(request.homeTown())
+                    .nativeLanguage(request.nativeLanguage())
+                    .targetLanguage(request.targetLanguage())
+                    .targetLanguageLevel(request.targetLanguageLevel())
+                    .minAge(request.minAge())
+                    .maxAge(request.maxAge())
+                    .latitude(myLocation.getLatitude())
+                    .longitude(myLocation.getLongitude())
+                    .maxDistance(request.maxDistance())
+                    .build();
+            }
         }
 
         // 2. 하드 필터 (QueryDSL)
@@ -324,8 +332,12 @@ public class MatchServiceImpl implements MatchService {
     @Override
     @Transactional
     public SwipeResDTO swipe(Member member, SwipeReqDTO request) {
+        if (member.getId().equals(request.targetMemberId())) {
+            throw new MatchException(MatchErrorStatus.SELF_SWIPE_NOT_ALLOWED);
+        }
+
         Member target = memberRepository.findById(request.targetMemberId())
-            .orElseThrow(() -> new IllegalArgumentException("Target member not found"));
+            .orElseThrow(() -> new MatchException(MatchErrorStatus.TARGET_MEMBER_NOT_FOUND));
 
         // 좋아요/싫어요 저장
         MemberLike memberLike = MemberLike.builder()
