@@ -6,13 +6,14 @@ import com.meetkey.server.domain.match.enums.MatchType;
 import com.meetkey.server.domain.match.repository.MatchRepository;
 import com.meetkey.server.domain.match.repository.RecommendationQueueRepository;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.entity.Preference;
 import com.meetkey.server.domain.member.entity.mapping.FromToId;
 import com.meetkey.server.domain.member.entity.mapping.MemberLike;
 import com.meetkey.server.domain.member.entity.mapping.MemberLocation;
+import com.meetkey.server.domain.member.enums.Membership;
 import com.meetkey.server.domain.member.repository.MemberLikeRepository;
 import com.meetkey.server.domain.member.repository.MemberLocationRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
-import com.meetkey.server.domain.member.entity.Preference;
 import com.meetkey.server.domain.member.repository.PreferenceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,10 +47,15 @@ public class MatchServiceImpl implements MatchService {
         recommendationQueueRepository.deleteByMemberAndIsSwipedFalse(member);
 
         // 1. 금일 스와이프 횟수 확인 (일일 제한 10명)
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        long todaySwipes = memberLikeRepository.countByFromMemberAndCreatedAtBetween(member, startOfDay, endOfDay);
-        int remainingQuota = Math.max(0, 10 - (int) todaySwipes);
+        int remainingQuota;
+        if (member.getMembership() == Membership.PREMIUM) {
+            remainingQuota = 10; // 유료 회원은 제한 없음 (항상 10명 풀 요청 가능)
+        } else {
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+            long todaySwipes = memberLikeRepository.countByFromMemberAndCreatedAtBetween(member, startOfDay, endOfDay);
+            remainingQuota = Math.max(0, 10 - (int) todaySwipes);
+        }
 
         // 2. 분기 처리: 일일 할당량 남음 vs 소진 (Recycle)
         if (remainingQuota > 0) {
@@ -148,9 +154,9 @@ public class MatchServiceImpl implements MatchService {
         return scoredCandidates.stream()
             .map(ms -> {
                 // 백필된 멤버의 경우 prefMap에 없을 수 있음
-                Preference targetPref = prefMap.containsKey(ms.member().getId()) ? 
-                                        prefMap.get(ms.member().getId()) : 
-                                        preferenceRepository.findById(ms.member().getId()).orElse(null);
+                Preference targetPref = prefMap.containsKey(ms.member().getId()) ?
+                    prefMap.get(ms.member().getId()) :
+                    preferenceRepository.findById(ms.member().getId()).orElse(null);
                 return convertToDTO(ms.member(), targetPref);
             })
             .collect(Collectors.toList());
