@@ -73,9 +73,23 @@ public class MatchServiceImpl implements MatchService {
             Collections.shuffle(recycleMembers);
             List<Member> limitedRecycle = recycleMembers.stream().limit(10).toList();
 
-            // 여기서는 단순 조회로 반환
+            List<MemberLocation> recycleLocations = memberLocationRepository.findAllByMemberIn(limitedRecycle);
+            Map<Long, MemberLocation> recycleLocMap = recycleLocations.stream()
+                .collect(Collectors.toMap(loc -> loc.getMember().getId(), loc -> loc));
+
+            MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
+
             List<RecommendationResDTO> dtos = limitedRecycle.stream()
-                .map(this::convertToDTO)
+                .map(target -> {
+                    Preference pref = preferenceRepository.findById(target.getId()).orElse(null);
+                    MemberLocation targetLoc = recycleLocMap.get(target.getId());
+                    double distance = 0.0;
+                    if (myLocation != null && targetLoc != null) {
+                        distance = calculateDistance(myLocation.getLatitude(), myLocation.getLongitude(),
+                            targetLoc.getLatitude(), targetLoc.getLongitude());
+                    }
+                    return convertToDTO(target, pref, distance);
+                })
                 .collect(Collectors.toList());
 
             return buildResponse(dtos, dtos.size(), MatchType.RECYCLE);
@@ -97,11 +111,27 @@ public class MatchServiceImpl implements MatchService {
         // 1. 기 스와이프 유저 제외
         List<Long> excludedIds = memberLikeRepository.findSwipedMemberIdsByMember(member);
 
+        // 1.5. 위치 정보 보정 (요청에 좌표 없고 DB에 있으면 DB 값 사용)
+        MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
+        if (request.maxDistance() != null && (request.latitude() == null || request.longitude() == null) && myLocation != null) {
+            request = RecommendationReqDTO.builder()
+                .interests(request.interests())
+                .homeTown(request.homeTown())
+                .nativeLanguage(request.nativeLanguage())
+                .targetLanguage(request.targetLanguage())
+                .targetLanguageLevel(request.targetLanguageLevel())
+                .minAge(request.minAge())
+                .maxAge(request.maxAge())
+                .latitude(myLocation.getLatitude())
+                .longitude(myLocation.getLongitude())
+                .maxDistance(request.maxDistance())
+                .build();
+        }
+
         // 2. 하드 필터 (QueryDSL)
         List<Member> candidates = matchRepository.findRecommendableMembers(member, request, excludedIds, 100);
 
         // 3. 소프트 스코어링 (점수 계산)
-        MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
         Preference myPreference = preferenceRepository.findById(member.getId()).orElse(null);
 
         // 후보자들의 Preference 일괄 조회
@@ -110,10 +140,16 @@ public class MatchServiceImpl implements MatchService {
         Map<Long, Preference> prefMap = preferences.stream()
             .collect(Collectors.toMap(p -> p.getMember().getId(), p -> p));
 
+        // 후보자들의 Location 일괄 조회
+        List<MemberLocation> locations = memberLocationRepository.findAllByMemberIn(candidates);
+        Map<Long, MemberLocation> locMap = locations.stream()
+            .collect(Collectors.toMap(loc -> loc.getMember().getId(), loc -> loc));
+
         List<MemberScore> scoredCandidates = candidates.stream()
             .map(candidate -> {
                 Preference targetPref = prefMap.get(candidate.getId());
-                double score = calculateScore(member, myLocation, myPreference, candidate, targetPref);
+                MemberLocation targetLoc = locMap.get(candidate.getId());
+                double score = calculateScore(member, myLocation, myPreference, candidate, targetPref, targetLoc);
                 return new MemberScore(candidate, score);
             })
             .sorted((p1, p2) -> Double.compare(p2.score, p1.score))
@@ -123,7 +159,7 @@ public class MatchServiceImpl implements MatchService {
         // 10명 미만일 경우 랜덤 유저 백필 (엄격한 조건 적용)
         if (scoredCandidates.size() < limit) {
             int needed = limit - scoredCandidates.size();
-            List<Long> currentIds = scoredCandidates.stream().map(ms -> ms.member().getId()).collect(Collectors.toList());
+            List<Long> currentIds = scoredCandidates.stream().map(ms -> ms.member().getId()).toList();
             List<Long> allExcluded = new ArrayList<>(excludedIds);
             allExcluded.addAll(currentIds);
 
@@ -135,6 +171,11 @@ public class MatchServiceImpl implements MatchService {
                 // scoredCandidates.add(new MemberScore(rm, 0.0)); // 점수는 0
                 // DTO 변환 시 필요하므로, 일단 점수 매기는 로직에 넣지 말고 0으로 하고, DTO 변환 시 조회하도록 함.
                 scoredCandidates.add(new MemberScore(rm, 0.0));
+
+                // Location map에 없으면 추가 조회 필요할 수 있음
+                if (!locMap.containsKey(rm.getId())) {
+                    memberLocationRepository.findByMember(rm).ifPresent(loc -> locMap.put(rm.getId(), loc));
+                }
             });
         }
 
@@ -157,12 +198,23 @@ public class MatchServiceImpl implements MatchService {
                 Preference targetPref = prefMap.containsKey(ms.member().getId()) ?
                     prefMap.get(ms.member().getId()) :
                     preferenceRepository.findById(ms.member().getId()).orElse(null);
-                return convertToDTO(ms.member(), targetPref);
+
+                MemberLocation targetLoc = locMap.containsKey(ms.member().getId()) ?
+                    locMap.get(ms.member().getId()) :
+                    memberLocationRepository.findByMember(ms.member()).orElse(null);
+
+                double distance = 0.0;
+                if (myLocation != null && targetLoc != null) {
+                    distance = calculateDistance(myLocation.getLatitude(), myLocation.getLongitude(),
+                        targetLoc.getLatitude(), targetLoc.getLongitude());
+                }
+
+                return convertToDTO(ms.member(), targetPref, distance);
             })
             .collect(Collectors.toList());
     }
 
-    private double calculateScore(Member me, MemberLocation myLoc, Preference myPref, Member target, Preference targetPref) {
+    private double calculateScore(Member me, MemberLocation myLoc, Preference myPref, Member target, Preference targetPref, MemberLocation targetLoc) {
         double score = 0;
 
         // 1. 언어 점수 (최대 +5점)
@@ -202,12 +254,9 @@ public class MatchServiceImpl implements MatchService {
         }
 
         // 거리 50km 이내 (+1점)
-        if (myLoc != null) {
-            MemberLocation targetLoc = memberLocationRepository.findByMember(target).orElse(null);
-            if (targetLoc != null) {
-                double dist = calculateDistance(myLoc.getLatitude(), myLoc.getLongitude(), targetLoc.getLatitude(), targetLoc.getLongitude());
-                if (dist <= 50.0) score += 1;
-            }
+        if (myLoc != null && targetLoc != null) {
+            double dist = calculateDistance(myLoc.getLatitude(), myLoc.getLongitude(), targetLoc.getLatitude(), targetLoc.getLongitude());
+            if (dist <= 50.0) score += 1;
         }
 
         return score;
@@ -221,16 +270,17 @@ public class MatchServiceImpl implements MatchService {
             Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+        double dist = R * c;
+        return Math.round(dist * 100) / 100.0;
     }
 
     private RecommendationResDTO convertToDTO(Member member) {
         // Recycle 모드 등 단일 조회 시 사용
         Preference pref = preferenceRepository.findById(member.getId()).orElse(null);
-        return convertToDTO(member, pref);
+        return convertToDTO(member, pref, 0.0);
     }
 
-    private RecommendationResDTO convertToDTO(Member member, Preference pref) {
+    private RecommendationResDTO convertToDTO(Member member, Preference pref, double distance) {
         int age = member.getBirthday() != null ? LocalDate.now().getYear() - member.getBirthday().getYear() + 1 : 0;
 
         RecommendationResDTO.PersonalityDTO personalityDTO = null;
@@ -254,7 +304,7 @@ public class MatchServiceImpl implements MatchService {
             .nickname(member.getName())
             .age(age)
             .hometown(member.getHomeTown())
-            .distance(0.0) // 위치 정보 로직 생략 (0.0 반환)
+            .distance(distance)
             .gender(member.getGender())
             .nativeLanguage(RecommendationResDTO.LanguageDTO.builder()
                 .language(member.getFirstLanguage())
