@@ -42,9 +42,11 @@ public class MatchServiceImpl implements MatchService {
     private final PreferenceRepository preferenceRepository;
     private final RecommendationQueueRepository recommendationQueueRepository;
 
-    @Override
     @Transactional
-    public MatchListResDTO getRecommendations(Member member, RecommendationReqDTO request) {
+    @Override
+    public MatchListResDTO getRecommendations(Long memberId, RecommendationReqDTO request) {
+        Member member = getMember(memberId);
+
         // 0. 기존 큐 초기화 (필터 변경 시 반영을 위해)
         recommendationQueueRepository.deleteByMemberAndIsSwipedFalse(member);
 
@@ -331,7 +333,9 @@ public class MatchServiceImpl implements MatchService {
 
     @Override
     @Transactional
-    public SwipeResDTO swipe(Member member, SwipeReqDTO request) {
+    public SwipeResDTO swipe(Long memberId, SwipeReqDTO request) {
+        Member member = getMember(memberId);
+
         if (member.getId().equals(request.targetMemberId())) {
             throw new MatchException(MatchErrorStatus.SELF_SWIPE_NOT_ALLOWED);
         }
@@ -360,5 +364,10 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private record MemberScore(Member member, double score) {
+    }
+
+    private Member getMember(Long memberId) {
+        return memberRepository.findById(memberId)
+            .orElseThrow(() -> new MatchException(MatchErrorStatus.MEMBER_NOT_FOUND));
     }
 }

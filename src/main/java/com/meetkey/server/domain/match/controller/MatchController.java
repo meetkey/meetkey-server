@@ -5,8 +5,6 @@ import com.meetkey.server.domain.match.dto.RecommendationReqDTO;
 import com.meetkey.server.domain.match.dto.SwipeReqDTO;
 import com.meetkey.server.domain.match.dto.SwipeResDTO;
 import com.meetkey.server.domain.match.service.MatchService;
-import com.meetkey.server.domain.member.entity.Member;
-import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
 import com.meetkey.server.global.security.CustomUserDetails;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 public class MatchController {
 
     private final MatchService matchService;
-    private final MemberRepository memberRepository;
 
     @Operation(summary = "사용자 추천 API", description = "사용자를 추천 받습니다.")
     @GetMapping("/recommendations")
@@ -30,10 +27,7 @@ public class MatchController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @ModelAttribute @Valid RecommendationReqDTO request
     ) {
-        Member member = memberRepository.findById(userDetails.getMemberId())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid User ID"));
-
-        return BasicResponse.success(CommonSuccessStatus._OK, matchService.getRecommendations(member, request));
+        return BasicResponse.success(CommonSuccessStatus._OK, matchService.getRecommendations(userDetails.getMemberId(), request));
     }
 
     @Operation(summary = "스와이프 결과 전송", description = "추천된 사용자의 관심 여부를 전송합니다.")
@@ -42,9 +36,6 @@ public class MatchController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestBody @Valid SwipeReqDTO request
     ) {
-        Member member = memberRepository.findById(userDetails.getMemberId())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid User ID"));
-
-        return BasicResponse.success(CommonSuccessStatus._OK, matchService.swipe(member, request));
+        return BasicResponse.success(CommonSuccessStatus._OK, matchService.swipe(userDetails.getMemberId(), request));
     }
 }
