@@ -2,6 +2,7 @@ package com.meetkey.server.domain.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.meetkey.server.domain.member.enums.*;
+import com.meetkey.server.global.annotation.PhoneNumber;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -19,6 +20,6 @@ public class MemberReqDTO {
             @NotNull Language firstLanguage,
             @NotNull Language targetLanguage,
             @NotNull Level targetLanguageLevel,
-            @NotNull String phoneNumber
+            @NotNull @PhoneNumber String phoneNumber
     ){}
 }
