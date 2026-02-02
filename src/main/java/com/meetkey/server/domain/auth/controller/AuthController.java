@@ -16,6 +16,8 @@ import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -54,6 +56,10 @@ public class AuthController {
     }
 
     @Operation(summary = "로그인 API", description = "소셜 정보를 통해 로그인을 합니다. (애플 로그인의 경우 아직 작동 X)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공", content = @Content(schema = @Schema(implementation = JwtResDTO.JwtResponse.class))),
+            @ApiResponse(responseCode = "400", description = "AUTH4003: 소셜 로그인 Provider 잘못 씀, AUTH4001: IdToken 파싱 과정 중 오류")
+    })
     @PostMapping("/login")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> login(
             @RequestParam("provider") Provider provider,
@@ -65,6 +71,10 @@ public class AuthController {
     }
 
     @Operation(summary = "회원가입 API", description = "전화번호는 국제번호 규격에 맞추어야 합니다. ex: +821012345678")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공", content = @Content(schema = @Schema(implementation = JwtResDTO.JwtResponse.class))),
+            @ApiResponse(responseCode = "400", description = "AUTH4003: 소셜 로그인 Provider 잘못 씀"),
+    })
     @PostMapping("/signup")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> signup(
             @RequestParam("provider") Provider provider,
@@ -76,6 +86,10 @@ public class AuthController {
     }
 
     @Operation(summary = "토큰 재발급 API", description = "access 토큰 기간 만료 시 refresh 토큰으로 재발급합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공", content = @Content(schema = @Schema(implementation = JwtResDTO.JwtResponse.class))),
+            @ApiResponse(responseCode = "401", description = "AUTH4011: 리프레시 토큰이 잘못됨")
+    })
     @PostMapping("/reissue")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> reissue(
             @RequestHeader(value = "refresh", required = false) String refreshToken
