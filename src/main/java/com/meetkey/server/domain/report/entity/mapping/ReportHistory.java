@@ -22,14 +22,14 @@ public class ReportHistory {
     @ManyToOne(fetch = FetchType.LAZY)
     private Report report;
 
-    @Column(nullable = false)
     private String managerId;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ReportStatus status;
+    @Builder.Default
+    private ReportStatus status = ReportStatus.PENDING;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String reason;
 
     private LocalDateTime suspendedAt;
