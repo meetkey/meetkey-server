@@ -57,6 +57,10 @@ public class Member extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Level targetLanguageLevel;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Membership membership = Membership.FREE;
+
     private LocalDateTime inactiveDate;
 
     @Enumerated(EnumType.STRING)

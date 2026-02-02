@@ -35,6 +35,20 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
+    @Operation(summary = "위치 정보 수정 API", description = "사용자의 위도, 경도를 수정합니다.")
+    @PatchMapping("/me/location")
+    public ResponseEntity<BasicResponse<String>> updateLocation(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody LocationUpdateRequest request
+    ) {
+        Long memberId = customUserDetails.getMemberId();
+        profileService.updateLocation(memberId, request);
+
+        return ResponseEntity
+                .ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, "위치 정보가 수정되었습니다."));
+    }
+
     @Operation(summary = "프로필 수정 시 조회 API", description = "이름, 나이, 위치, 한줄 소개를 조회합니다.")
     @GetMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileUpdateResponse>> getProfile(
