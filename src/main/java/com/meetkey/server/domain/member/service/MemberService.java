@@ -56,7 +56,7 @@ public class MemberService {
                 .firstLanguage(req.firstLanguage())
                 .homeTown(req.homeTown())
                 .targetLanguageLevel(req.targetLanguageLevel())
-                .role(Role.valueOf("ROLE_ADMIN"))
+                .role(Role.ROLE_ADMIN)
                 .build();
 
         memberRepository.save(member);
@@ -69,23 +69,5 @@ public class MemberService {
         socialLoginRepository.save(socialMember);
 
         return member;
-    }
-
-    @Transactional
-    public void updateRefreshToken(String username, String newRefresh) {
-        Long memberId = Long.parseLong(username);
-
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
-
-        if (newRefresh != null) {
-            member.changeRefreshToken(newRefresh, 86400000L);
-        } else {
-            member.changeRefreshToken(null,0L);
-        }
-    }
-
-    public boolean isRefreshTokenExists(String refreshToken){
-        return memberRepository.existsByRefreshToken(refreshToken);
     }
 }

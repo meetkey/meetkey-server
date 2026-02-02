@@ -1,11 +1,9 @@
 package com.meetkey.server.global.security.jwt;
 
 
-import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
-import com.meetkey.server.domain.auth.exception.AuthException;
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +15,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
     private final SecretKey secretKey;
+    private final Long accessTokenExpiresIn = 3600L * 1000; // 1시간
+    private final Long refreshTokenExpiresIn = 604800L * 1000; // 7일
 
     public JwtUtil(@Value("${spring.jwt.secret}")String secret ) {
         secretKey = new SecretKeySpec(
@@ -25,70 +25,67 @@ public class JwtUtil {
         );
     }
 
-    public String getCategory(String token){
-        return Jwts.parser().verifyWith(secretKey).build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("category", String.class);
-    }
-
     public String getUsername(String token) {
         return Jwts.parser().verifyWith(secretKey).build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .getPayload().get("sub", String.class);
     }
 
     public String getRole(String token) {
         return Jwts.parser().verifyWith(secretKey).build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .get("role", String.class);
+                .getPayload().get("role", String.class);
     }
 
-    public Boolean isExpired(String token) {
-        return Jwts.parser().verifyWith(secretKey).build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration().before(new Date());
+    public Boolean isValid(String token, Boolean isAccess) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String type = claims.get("type", String.class);
+            if (type == null) return false;
+
+            if (isAccess && !type.equals("access")) return false;
+            if (!isAccess && !type.equals("refresh")) return false;
+
+            return true;
+
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 
-    public String createJwt(String category, String username, String role, Long expiredMs){
+    public String createJwt(String username, String role, Boolean isAccess) {
+        long now = System.currentTimeMillis();
+        long expiry = isAccess ? accessTokenExpiresIn : refreshTokenExpiresIn;
+        String type = isAccess ? "access" : "refresh";
+
         return Jwts.builder()
-                .subject(username)
-                .claim("category", category)
+                .claim("sub", username)
                 .claim("role", role)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .claim("type", type)
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + expiry))
                 .signWith(secretKey)
                 .compact();
     }
 
-    public Cookie createCookie(String key, String value){
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);
-        cookie.setHttpOnly(true);
+    public String createDevJwt(String username, String role, Boolean isAccess) {
+        long oneDay = 1;
+        long now = System.currentTimeMillis();
+        long expiry = isAccess ? oneDay * 365 : oneDay * 3650;
+        String type = isAccess ? "access" : "refresh";
 
-        return cookie;
-    }
-
-    public void validateRefreshToken(String refreshToken) {
-        if (refreshToken == null) {
-            throw new AuthException(AuthErrorStatus.INVALID_TOKEN);
-        }
-
-        // refresh token 토큰 만료 검증
-        try {
-            this.isExpired(refreshToken);
-        } catch (ExpiredJwtException e) {
-            throw new AuthException(AuthErrorStatus.EXPIRED_TOKEN);
-        }
-
-        // 토큰이 refresh인지 확인
-        String category = this.getCategory(refreshToken);
-
-        if (!category.equals("refresh")){
-            throw new  AuthException(AuthErrorStatus.INVALID_TOKEN);
-        }
+        return Jwts.builder()
+                .claim("sub", username)
+                .claim("role", role)
+                .claim("type", type)
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + expiry))
+                .signWith(secretKey)
+                .compact();
     }
 }

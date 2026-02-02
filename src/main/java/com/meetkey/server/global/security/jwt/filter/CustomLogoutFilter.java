@@ -1,6 +1,7 @@
 package com.meetkey.server.global.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meetkey.server.domain.auth.repository.RefreshTokenRepository;
 import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
@@ -21,7 +22,7 @@ import java.io.PrintWriter;
 @RequiredArgsConstructor
 public class CustomLogoutFilter extends GenericFilterBean {
     private final JwtUtil jwtUtil;
-    private final MemberService memberService;
+    private final RefreshTokenRepository  refreshTokenRepository;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -49,27 +50,18 @@ public class CustomLogoutFilter extends GenericFilterBean {
         }
 
         try {
-            jwtUtil.isExpired(refresh);
+            jwtUtil.isValid(refresh, false);
         } catch (ExpiredJwtException e){
             anywayLogout(response);
             return;
         }
 
-        String category = jwtUtil.getCategory(refresh);
-        if (!category.equals("refresh")) {
-
-            //response status code
+        if (refreshTokenRepository.findById(refresh).isEmpty()){
             anywayLogout(response);
             return;
         }
 
-        if (!memberService.isRefreshTokenExists(refresh)){
-            anywayLogout(response);
-            return;
-        }
-
-        String username = jwtUtil.getUsername(refresh);
-        memberService.updateRefreshToken(username, null);
+        refreshTokenRepository.delete(refresh);
 
         anywayLogout(response);
     }

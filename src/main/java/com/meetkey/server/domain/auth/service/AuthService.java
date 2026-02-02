@@ -1,5 +1,7 @@
 package com.meetkey.server.domain.auth.service;
 
+import com.meetkey.server.domain.auth.entity.RefreshToken;
+import com.meetkey.server.domain.auth.repository.RefreshTokenRepository;
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.SocialLogin;
@@ -27,8 +29,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private static final Long ACCESS_TOKEN_EXP = 600000L; // 10분
-    private static final Long REFRESH_TOKEN_EXP = 86400000L; // 24시간
 
     @Value("${kakao.app-key}")
     private String kakaoAppKey;
@@ -39,9 +39,11 @@ public class AuthService {
     private final AppleOauthClient appleClient;
 
     private final OauthOidcHelper oAuthOIDCHelper;
-    private final SocialLoginRepository socialLoginRepository;
     private final JwtUtil jwtUtil;
     private final MemberService memberService;
+
+    private final SocialLoginRepository socialLoginRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
     public JwtResDTO.JwtResponse devSignup(OauthReqDTO.SignupReq req){
@@ -58,7 +60,6 @@ public class AuthService {
     @Transactional
     public JwtResDTO.JwtResponse signup(Provider provider, OauthReqDTO.SignupReq req){
         // 카카오 플랫폼 인증 및 ID 추출
-
         String providerId;
         if (provider == Provider.KAKAO) {
             providerId = getKakaoProviderIdFromIdToken(req.idToken());
@@ -79,7 +80,14 @@ public class AuthService {
 
     @Transactional
     public JwtResDTO.JwtResponse login(Provider provider, String idToken){
-        String providerId = getKakaoProviderIdFromIdToken(idToken);
+        String providerId;
+        if (provider == Provider.KAKAO) {
+            providerId = getKakaoProviderIdFromIdToken(idToken);
+        } else if (provider == Provider.APPLE) {
+            providerId = getAppleProviderIdFromIdToken(idToken);
+        } else {
+            throw new AuthException(AuthErrorStatus.INVALID_SOCIAL);
+        }
 
         Optional<SocialLogin> socialMember =
                 socialLoginRepository.findByProviderAndProviderId(provider, providerId);
@@ -100,21 +108,20 @@ public class AuthService {
 
     @Transactional
     public JwtResDTO.JwtResponse reissue(String refreshToken){
-        jwtUtil.validateRefreshToken(refreshToken);
+        jwtUtil.isValid(refreshToken, false);
 
-        if (!memberService.isRefreshTokenExists(refreshToken)) {
+        if (refreshTokenRepository.findById(refreshToken).isEmpty()) {
             throw new AuthException(AuthErrorStatus.INVALID_TOKEN);
         }
 
         String username = jwtUtil.getUsername(refreshToken);
         String role = jwtUtil.getRole(refreshToken);
 
+        String newAccess = jwtUtil.createJwt(username, role, true);
+        String newRefresh = jwtUtil.createJwt(username, role, false);
 
-        String newAccess = jwtUtil.createJwt(
-                "access", username, role, ACCESS_TOKEN_EXP);
-        String newRefresh = jwtUtil.createJwt("refresh", username, role, REFRESH_TOKEN_EXP);
-
-        memberService.updateRefreshToken(username, newRefresh);
+        refreshTokenRepository.delete(refreshToken);
+        refreshTokenRepository.save(new RefreshToken(newRefresh, username));
 
         return JwtResDTO.JwtResponse.builder()
                 .accessToken(newAccess)
@@ -125,10 +132,11 @@ public class AuthService {
     }
 
     private JwtResDTO.JwtResponse getJwtResponseDTO(Member member) {
-        String accessToken = jwtUtil.createJwt("access", member.getId().toString(), member.getRole().toString(), ACCESS_TOKEN_EXP);
-        String refreshToken = jwtUtil.createJwt("refresh", member.getId().toString(), member.getRole().toString(), REFRESH_TOKEN_EXP);
+        String accessToken = jwtUtil.createJwt(member.getId().toString(), member.getRole().toString(), true);
+        String refreshToken = jwtUtil.createJwt(member.getId().toString(), member.getRole().toString(), false);
 
-        member.changeRefreshToken(refreshToken, REFRESH_TOKEN_EXP);
+        // redis에 refreshtoken 저장
+        refreshTokenRepository.save(new RefreshToken(refreshToken, member.getId().toString()));
 
         return JwtResDTO.JwtResponse.builder()
                 .memberId(member.getId())
@@ -139,10 +147,11 @@ public class AuthService {
     }
 
     private JwtResDTO.JwtResponse getDevJwtResponseDTO(Member member) {
-        String accessToken = jwtUtil.createJwt("access", member.getId().toString(), member.getRole().toString(), 1000 * 60 * 60 * 24 * 365L);
-        String refreshToken = jwtUtil.createJwt("refresh", member.getId().toString(), member.getRole().toString(), 1000 * 60 * 60 * 24 * 3650L);
+        String accessToken = jwtUtil.createDevJwt(member.getId().toString(), member.getRole().toString(), true);
+        String refreshToken = jwtUtil.createDevJwt(member.getId().toString(), member.getRole().toString(), false);
 
-        member.changeRefreshToken(refreshToken, REFRESH_TOKEN_EXP);
+        // redis에 refreshToken 저장
+        refreshTokenRepository.saveDev(new RefreshToken(refreshToken, member.getId().toString()));
 
         return JwtResDTO.JwtResponse.builder()
                 .memberId(member.getId())
