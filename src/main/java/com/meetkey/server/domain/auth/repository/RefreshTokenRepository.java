@@ -28,6 +28,17 @@ public class RefreshTokenRepository {
         );
     }
 
+    public void saveDev(final RefreshToken refreshToken) {
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        String key = PREFIX + refreshToken.getRefreshToken();
+        valueOperations.set(
+                key,
+                String.valueOf(refreshToken.getMemberId()),
+                365,
+                TimeUnit.DAYS
+        );
+    }
+
     public Optional<RefreshToken> findById(final String refreshToken){
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         String memberId = valueOperations.get(PREFIX + refreshToken);

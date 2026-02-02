@@ -16,6 +16,8 @@ import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +37,7 @@ public class AuthController {
     @Value("${admin.secret}")
     private String adminSecret;
 
-    @Operation(summary = "마스터 계정 발급")
+    @Operation(summary = "마스터 계정 발급", description = "노션에 마스터 토큰을 올려두었습니다. 이상 있는 경우 따밥/김채원 으로 연락주세요")
     @PostMapping("/test")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> test(
             @RequestHeader(value = "X-Admin-Secret", required = false) String secret,

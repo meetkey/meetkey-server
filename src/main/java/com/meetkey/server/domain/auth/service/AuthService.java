@@ -29,8 +29,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private static final Long ACCESS_TOKEN_EXP = 600000L; // 10분
-    private static final Long REFRESH_TOKEN_EXP = 86400000L; // 24시간
 
     @Value("${kakao.app-key}")
     private String kakaoAppKey;
@@ -152,8 +150,8 @@ public class AuthService {
         String accessToken = jwtUtil.createDevJwt(member.getId().toString(), member.getRole().toString(), true);
         String refreshToken = jwtUtil.createDevJwt(member.getId().toString(), member.getRole().toString(), false);
 
-        // redis에 refreshtoken 저장
-        refreshTokenRepository.save(new RefreshToken(refreshToken, member.getId().toString()));
+        // redis에 refreshToken 저장
+        refreshTokenRepository.saveDev(new RefreshToken(refreshToken, member.getId().toString()));
 
         return JwtResDTO.JwtResponse.builder()
                 .memberId(member.getId())

@@ -74,8 +74,9 @@ public class JwtUtil {
     }
 
     public String createDevJwt(String username, String role, Boolean isAccess) {
+        long oneDay = 1;
         long now = System.currentTimeMillis();
-        long expiry = isAccess ? 604800L * 10000 : 604800L * 100000;
+        long expiry = isAccess ? oneDay * 365 : oneDay * 3650;
         String type = isAccess ? "access" : "refresh";
 
         return Jwts.builder()
