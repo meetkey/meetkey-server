@@ -34,4 +34,9 @@ public class ProfileReqDTO {
             Long targetMemberId,
             EvaluationType type
     ) {}
+
+    public record LocationUpdateRequest(
+            Double latitude,
+            Double longitude
+    ) {}
 }
