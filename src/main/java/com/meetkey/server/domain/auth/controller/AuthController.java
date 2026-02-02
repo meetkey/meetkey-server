@@ -16,6 +16,7 @@ import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -38,7 +39,7 @@ public class AuthController {
     @PostMapping("/test")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> test(
             @RequestHeader(value = "X-Admin-Secret", required = false) String secret,
-            @RequestBody OauthReqDTO.SignupReq signupReq
+            @Valid @RequestBody OauthReqDTO.SignupReq signupReq
     ) {
         if (adminSecret == null || !adminSecret.equals(secret)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -54,18 +55,18 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> login(
             @RequestParam("provider") Provider provider,
-            @RequestBody OauthReqDTO.LoginReq loginReq
+            @Valid @RequestBody OauthReqDTO.LoginReq loginReq
     ) {
         JwtResDTO.JwtResponse jwts = authService.login(provider, loginReq.idToken());
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, jwts));
     }
 
-    @Operation(summary = "회원가입 API", description = "소셜 로그인에 회원 정보가 없으면 회원가입을 합니다. (애플 로그인의 경우 아직 작동 X)")
+    @Operation(summary = "회원가입 API", description = "전화번호는 국제번호 규격에 맞추어야 합니다. ex: +821012345678")
     @PostMapping("/signup")
     public ResponseEntity<BasicResponse<JwtResDTO.JwtResponse>> signup(
             @RequestParam("provider") Provider provider,
-            @RequestBody OauthReqDTO.SignupReq signupReq
+            @Valid @RequestBody OauthReqDTO.SignupReq signupReq
     ) {
         JwtResDTO.JwtResponse jwts = authService.signup(provider, signupReq);
         return ResponseEntity.ok()

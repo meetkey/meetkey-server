@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = PhoneNumberValidator.class)
-@Target( {ElementType.PARAMETER })
+@Target( {ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PhoneNumber {
     String message() default "휴대전화 번호가 국제번호 규격에 맞지 않습니다.";

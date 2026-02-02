@@ -73,26 +73,12 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Integer notRecommendCount = 0;
-
-
-
-
-
-    private String refreshToken;
-    private LocalDateTime refreshTokenExpiration;
-
     /*
      * 관심사
      */
     @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<InterestMember> interestMembers = new ArrayList<>();
-
-
-    public void changeRefreshToken(String newRefreshToken, Long expMillis) {
-        this.refreshToken = newRefreshToken;
-        this.refreshTokenExpiration = LocalDateTime.now().plusNanos(expMillis);
-    }
 
     // 프로필 업데이트
     public void updateProfileInfo(String location, String bio, Language first, Language target, Level level) {
