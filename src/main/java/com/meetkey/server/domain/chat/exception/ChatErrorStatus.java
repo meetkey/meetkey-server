@@ -19,6 +19,7 @@ public enum ChatErrorStatus implements BaseCode {
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT2042", "해당 메시지를 찾을 수 없습니다."),
     CHAT_ROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_ROOM_MEMBER_404_1", "해당 채팅 멤버를 찾을 수 없습니다."),
     NOT_CHAT_ROOM_MEMBER(HttpStatus.FORBIDDEN, "CHAT3031", "해당 채팅방의 참여자가 아닙니다."),
+    DURATION_REQUIRED(HttpStatus.BAD_REQUEST, "INPUT1001", "duration이 누락되었습니다. 음성 메시지의 길이를 입력해주세요."),
 
     ;
 

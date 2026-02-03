@@ -15,10 +15,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -83,7 +85,8 @@ public class ChatController {
     }
 
     @MessageMapping("/chat/send")
-    public void sendMessage(ChatMessageSendReqDTO req, @AuthenticationPrincipal CustomUserDetails details) {
+    public void sendMessage(@Payload ChatMessageSendReqDTO req, Principal principal) {
+        CustomUserDetails details = (CustomUserDetails) principal;
         Long senderId = details.getMemberId();
 
         ChatMessage message = chatMessageCommandService.sendMessage(
@@ -92,7 +95,7 @@ public class ChatController {
                 req.getMessageType(),
                 req.getContent(),
                 req.getMediaUrl(),
-                req.getDuration()
+                req.getDuration() // VOICE 메시지일 때만 사용, TEXT와 IMAGE는 null
         );
 
         // 같은 채팅방 구독자에게 broadcast
