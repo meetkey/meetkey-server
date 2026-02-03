@@ -10,6 +10,8 @@ import com.meetkey.server.domain.chat.repository.ChatMessageRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomMemberRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomRepository;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.exception.MemberErrorStatus;
+import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.chat.exception.ChatException;
 import com.meetkey.server.global.apiPayload.exception.GeneralException;
@@ -50,14 +52,16 @@ public class ChatQueryService {
     // 채팅방 상세 조회
     public ChatResDTO.ChatMessageListRes getChatMessageList(Long memberId, Long chatRoomId, Long cursorId){
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
-
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
-        ChatRoomMember oppenetChatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+
+        ChatRoomMember myChatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
+        ChatRoomMember opponentChatRoomMember = chatRoomMemberRepository.findByChatRoomAndMemberNot(chatRoom, member)
                 .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
 
-        // 값 받게끔 수정
+        
         Pageable pageable = PageRequest.of(0, 30);
 
         Slice<ChatMessage> slice = (cursorId == null)
@@ -70,6 +74,6 @@ public class ChatQueryService {
                 ? null
                 : content.get(content.size() - 1).getId();
 
-        return ChatConverter.toChatMessageListRes(oppenetChatRoomMember, content, nextCursor, slice.hasNext());
+        return ChatConverter.toChatMessageListRes(opponentChatRoomMember, content, nextCursor, slice.hasNext());
     }
 }
