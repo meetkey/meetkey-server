@@ -1,10 +1,12 @@
 package com.meetkey.server.domain.chat.controller;
 
+import com.meetkey.server.domain.chat.dto.pub.ChatMessagePubDTO;
 import com.meetkey.server.domain.chat.dto.request.ChatMessageSendReqDTO;
 import com.meetkey.server.domain.chat.dto.request.ChatReqDTO;
 import com.meetkey.server.domain.chat.dto.response.ChatMessageResDTO;
 import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
 import com.meetkey.server.domain.chat.entity.ChatMessage;
+import com.meetkey.server.domain.chat.message.redis.ChatRedisPublisher;
 import com.meetkey.server.domain.chat.service.command.ChatCommandService;
 import com.meetkey.server.domain.chat.service.command.ChatMessageCommandService;
 import com.meetkey.server.domain.chat.service.query.ChatQueryService;
@@ -32,7 +34,7 @@ public class ChatController {
     private final ChatCommandService chatCommandService;
     private final ChatQueryService chatQueryService;
     private final ChatMessageCommandService chatMessageCommandService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatRedisPublisher chatRedisPublisher;
 
     @Operation(summary = "채팅방 생성 API by 제인", description = "채팅방을 생성하는 API by 제인")
     @PostMapping
@@ -98,7 +100,7 @@ public class ChatController {
                 req.getDuration() // VOICE 메시지일 때만 사용, TEXT와 IMAGE는 null
         );
 
-        // 같은 채팅방 구독자에게 broadcast
-        messagingTemplate.convertAndSend("/sub/chat/" + req.getChatRoomId(), ChatMessageResDTO.from(message));
+        // 같은 채팅방 구독자에게 Redis로 publish
+        chatRedisPublisher.publish(ChatMessagePubDTO.from(message));
     }
 }
