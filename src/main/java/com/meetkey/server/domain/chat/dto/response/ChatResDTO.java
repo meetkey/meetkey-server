@@ -26,6 +26,7 @@ public class ChatResDTO {
             ChatOpponentRes chatOpponent,
             String lastChatMessages,
             Integer unReadMessageCnt,
+            long unreadCount,
             LocalDateTime updatedAt
     ){}
 

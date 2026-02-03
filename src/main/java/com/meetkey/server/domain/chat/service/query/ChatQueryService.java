@@ -38,15 +38,34 @@ public class ChatQueryService {
 
     // 채팅방 목록 조회
     public List<ChatResDTO.ChatPreviewRes> getChatRoomList(Long memberId){
-        //TODO: 나중에 만들어질 MemberErrorCode로 바꾸기
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
 
-        // TODO: 안 읽은 거 다 계산해야됨
-        List<ChatResDTO.ChatPreviewRes> list = chatRoomMemberRepository.findOppChatRooomMembersOrderByUpdatedAtDesc(memberId)
-                .stream().map(ChatConverter::toChatPreviewRes)
+        return chatRoomMemberRepository
+                .findOppChatRooomMembersOrderByUpdatedAtDesc(memberId) // 상대 기준
+                .stream()
+                .map(opponentChatRoomMember -> {
+                    ChatRoom chatRoom = opponentChatRoomMember.getChatRoom();
+                    ChatRoomMember myChatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                                    .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+                    // 미리보리용 최신 메시지
+                    ChatMessage lastMessage = chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom).orElse(null);
+
+                    // myChatRoomMember의 unreadCount 계산
+                    ChatMessage lastReadMsg = myChatRoomMember.getLastReadMsg();
+
+                    long unreadCount = (lastReadMsg == null)
+                            ? chatMessageRepository.countByChatRoom(chatRoom)
+                            : chatMessageRepository.countByChatRoomAndIdGreaterThan(chatRoom, lastReadMsg.getId());
+
+                    return ChatConverter.toChatPreviewRes(
+                            opponentChatRoomMember,
+                            lastMessage,
+                            unreadCount
+                    );
+                })
                 .toList();
-        return list;
     }
 
     // 채팅방 상세 조회

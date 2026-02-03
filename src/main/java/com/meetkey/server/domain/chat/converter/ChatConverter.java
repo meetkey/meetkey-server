@@ -35,7 +35,7 @@ public class ChatConverter {
                 .build();
     }
 
-    public static ChatResDTO.ChatPreviewRes toChatPreviewRes (ChatRoomMember chatRoomMember){
+    public static ChatResDTO.ChatPreviewRes toChatPreviewRes (ChatRoomMember chatRoomMember, ChatMessage lastMessage, long unreadCount){
 
         Member member = chatRoomMember.getMember();
         ChatRoom chatRoom = chatRoomMember.getChatRoom();
@@ -44,9 +44,8 @@ public class ChatConverter {
         return ChatResDTO.ChatPreviewRes.builder()
                 .roomId(chatRoom.getId())
                 .chatOpponent(ChatConverter.toChatOpponentRes(member))
-                .lastChatMessages(lastReadMsg.getContent())
-                // TODO: 어떤 값 넣어두기 필요해보임
-//                .unReadMessageCnt(2)
+                .lastChatMessages(lastMessage != null ? lastMessage.getContent() : null)
+                .unreadCount(unreadCount)
                 .updatedAt(chatRoom.getUpdatedAt())
                 .build();
     }

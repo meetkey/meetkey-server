@@ -3,6 +3,7 @@ package com.meetkey.server.domain.chat.service.command;
 import com.meetkey.server.domain.chat.converter.ChatConverter;
 import com.meetkey.server.domain.chat.dto.request.ChatReqDTO;
 import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
+import com.meetkey.server.domain.chat.entity.ChatMessage;
 import com.meetkey.server.domain.chat.entity.ChatRoom;
 import com.meetkey.server.domain.chat.entity.ChatRoomMember;
 import com.meetkey.server.domain.chat.exception.ChatErrorStatus;
@@ -75,11 +76,19 @@ public class ChatCommandService {
                 .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
-        ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
-                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
+        ChatRoomMember myChatRoomMember =
+                chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                        .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
 
-        chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom)
-                .ifPresent(chatRoomMember::updateLastReadMsg);
+        // 채팅방의 가장 최신 메시지 조회
+        ChatMessage latestMessage = chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom).orElse(null);
+        if (latestMessage == null) return;
+
+        // 이미 최신까지 읽은 상태라면 업데이트 안함
+        ChatMessage lastReadMsg = myChatRoomMember.getLastReadMsg();
+        if (lastReadMsg != null && lastReadMsg.getId() >= latestMessage.getId()) return;
+
+        myChatRoomMember.updateLastReadMsg(latestMessage);
     }
 
 
