@@ -45,15 +45,49 @@
 <hr/>
 
 <div>
-    <input id="message" type="text" size="50" placeholder="메시지 입력" />
+    <select id="messageType" onchange="onTypeChange()">
+        <option value="TEXT">TEXT</option>
+        <option value="IMAGE">IMAGE</option>
+        <option value="VOICE">VOICE</option>
+    </select>
+
+    <input id="message" type="text" size="50"
+           placeholder="메시지 입력" />
+
+    <input id="duration" type="number"
+           placeholder="음성 길이(ms)"
+           style="display:none; width:140px;" />
+
     <button onclick="sendMessage()">3️⃣ Send</button>
 </div>
+
 
 <h3>📨 Messages</h3>
 <div id="messages"></div>
 
 <script>
     let stompClient = null;
+
+    function onTypeChange() {
+        const type = document.getElementById("messageType").value;
+        const msgInput = document.getElementById("message");
+        const durationInput = document.getElementById("duration");
+
+        if (type === "TEXT") {
+            msgInput.placeholder = "메시지 입력";
+            durationInput.style.display = "none";
+        }
+
+        if (type === "IMAGE") {
+            msgInput.placeholder = "이미지 URL 입력";
+            durationInput.style.display = "none";
+        }
+
+        if (type === "VOICE") {
+            msgInput.placeholder = "음성 파일 URL 입력";
+            durationInput.style.display = "inline-block";
+        }
+    }
 
     function connect() {
         const socket = new SockJS("http://localhost:8080/ws-chat");
@@ -101,7 +135,7 @@
         const roomId = document.getElementById("roomId").value;
 
         stompClient.subscribe(
-            "/sub/chat-room/" + roomId,
+            "/user/queue/chat",
             function (message) {
                 const body = JSON.parse(message.body);
                 appendMessage(body);
@@ -114,29 +148,65 @@
     function sendMessage() {
         const roomId = document.getElementById("roomId").value;
         const content = document.getElementById("message").value;
+        const type = document.getElementById("messageType").value;
+        const duration = document.getElementById("duration").value;
+
+        const payload = {
+            chatRoomId: Number(roomId),
+            messageType: type,
+            content: content
+        };
+
+        if (type === "VOICE") {
+            payload.duration = Number(duration);
+        }
 
         stompClient.send(
             "/pub/chat/send",
             {},
-            JSON.stringify({
-                chatRoomId: Number(roomId),
-                messageType: "TEXT",
-                content: content
-            })
+            JSON.stringify(payload)
         );
 
         document.getElementById("message").value = "";
+        document.getElementById("duration").value = "";
     }
 
     function appendMessage(msg) {
         const box = document.getElementById("messages");
         const div = document.createElement("div");
         div.className = "msg";
-        div.innerText =
-            `[${msg.createdAt}] memberId=${msg.senderId} : ${msg.content}`;
+
+        console.log("받은 메시지:", msg);
+
+        const isMine = msg.mine;
+
+        div.style.textAlign = isMine ? "right" : "left";
+
+        if (msg.messageType === "TEXT") {
+            div.innerText =
+                `[${msg.createdAt}] ${isMine ? "나" : "상대"}: ${msg.content}`;
+        }
+
+        if (msg.messageType === "IMAGE") {
+            div.innerHTML = `
+        [${msg.createdAt}] ${isMine ? "나" : "상대"}<br/>
+        <img src="${msg.content}" style="max-width:200px"/>
+        `;
+        }
+
+        if (msg.messageType === "VOICE") {
+            div.innerHTML = `
+        [${msg.createdAt}] ${isMine ? "나" : "상대"}
+        (${msg.duration}ms)<br/>
+        <audio controls src="${msg.content}"></audio>
+        `;
+        }
+
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
     }
+
+
 </script>
 
 </body>
