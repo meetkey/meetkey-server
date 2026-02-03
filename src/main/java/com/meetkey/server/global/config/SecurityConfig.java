@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/s3/**").permitAll()
+                        .requestMatchers("/ws-chat/**","/chat-test.html").permitAll()
                         .requestMatchers("/users/me/interest", "/users/me/personality").permitAll()
                         .anyRequest().authenticated()
                 )
