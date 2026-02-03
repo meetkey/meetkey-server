@@ -2,7 +2,6 @@ package com.meetkey.server.global.websocket.security;
 
 import com.meetkey.server.global.websocket.code.StompErrorCode;
 import com.meetkey.server.global.websocket.exception.StompException;
-import com.meetkey.server.global.security.CustomUserDetails;
 import com.meetkey.server.global.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
@@ -11,7 +10,11 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -43,10 +46,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             String memberId = jwtUtil.getUsername(token);
             String role = jwtUtil.getRole(token);
 
-            CustomUserDetails user = new CustomUserDetails(memberId, role);
-            accessor.setUser(user);
+            Authentication authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            memberId,
+                            null,
+                            List.of(() -> role)
+                    );
+            accessor.setUser(authentication);
         }
-
         return message;
     }
 }

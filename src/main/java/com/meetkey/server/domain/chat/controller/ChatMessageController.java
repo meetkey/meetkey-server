@@ -5,7 +5,6 @@ import com.meetkey.server.domain.chat.dto.request.ChatMessageSendReqDTO;
 import com.meetkey.server.domain.chat.entity.ChatMessage;
 import com.meetkey.server.domain.chat.message.redis.ChatRedisPublisher;
 import com.meetkey.server.domain.chat.service.command.ChatMessageCommandService;
-import com.meetkey.server.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +26,7 @@ public class ChatMessageController {
     @Operation(summary = "메시지 전송 API", description = "채팅방에 메시지를 전송합니다. HTTP 호출이 아닌 WebSocket(STOMP) 프로토콜로 동작합니다.")
     @MessageMapping("/send")
     public void sendMessage(@Payload ChatMessageSendReqDTO req, Principal principal) {
-        CustomUserDetails details = (CustomUserDetails) principal;
-        Long senderId = details.getMemberId();
+        Long senderId = Long.valueOf(principal.getName());
 
         ChatMessage message = chatMessageCommandService.sendMessage(
                 senderId,

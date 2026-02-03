@@ -11,8 +11,6 @@ import java.util.Optional;
 
 public interface ChatRoomMemberRepository extends JpaRepository<ChatRoomMember, Long> {
 
-    List<ChatRoomMember> findByMemberOrderByUpdatedAtDesc(Member member);
-
     @Query("""
     select crm
     from ChatRoomMember crm
@@ -39,4 +37,12 @@ public interface ChatRoomMemberRepository extends JpaRepository<ChatRoomMember, 
     boolean existsByChatRoomIdAndMemberId(Long chatRoomId, Long memberId);
 
     Optional<ChatRoomMember> findByChatRoomAndMemberNot(ChatRoom chatRoom, Member member);
+
+    @Query("""
+        select crm.member.id
+        from ChatRoomMember crm
+        where crm.chatRoom.id = :chatRoomId
+    """)
+    List<Long> findMemberIdsByChatRoomId(Long chatRoomId);
+
 }
