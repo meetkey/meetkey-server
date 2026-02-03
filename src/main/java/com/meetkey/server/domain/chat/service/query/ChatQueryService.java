@@ -93,6 +93,6 @@ public class ChatQueryService {
                 ? null
                 : content.get(content.size() - 1).getId();
 
-        return ChatConverter.toChatMessageListRes(opponentChatRoomMember, content, nextCursor, slice.hasNext());
+        return ChatConverter.toChatMessageListRes(opponentChatRoomMember, content, nextCursor, slice.hasNext(), memberId);
     }
 }
