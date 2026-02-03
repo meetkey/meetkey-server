@@ -7,6 +7,7 @@ import com.meetkey.server.global.security.jwt.filter.CustomLogoutFilter;
 import com.meetkey.server.global.security.jwt.filter.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -40,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/s3/**").permitAll()
+                        .requestMatchers("/users/me/interest", "/users/me/personality").permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers

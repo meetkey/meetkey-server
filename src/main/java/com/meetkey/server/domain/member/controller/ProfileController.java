@@ -5,6 +5,12 @@ import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
 import com.meetkey.server.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import static com.meetkey.server.domain.member.dto.ProfileReqDTO.*;
 import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 
+@Tag(name = "Profile", description = "사용자 프로필 조회 및 수정 API")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/users")
@@ -20,7 +27,11 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @Operation(summary = "프로필 수정 API", description = "사용자의 위치, 한줄 소개를 변경합니다.")
+    @Operation(summary = "프로필 정보 수정 API", description = "사용자의 활동 지역(문자열), 한줄 소개, 언어 정보를 변경합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = ProfileUpdateResponse.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @PatchMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileUpdateResponse>> updateProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -35,7 +46,11 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "위치 정보 수정 API", description = "사용자의 위도, 경도를 수정합니다.")
+    @Operation(summary = "위치 정보(좌표) 수정 API", description = "사용자의 위도(latitude), 경도(longitude)를 갱신합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @PatchMapping("/me/location")
     public ResponseEntity<BasicResponse<String>> updateLocation(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -49,7 +64,11 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, "위치 정보가 수정되었습니다."));
     }
 
-    @Operation(summary = "프로필 수정 시 조회 API", description = "이름, 나이, 위치, 한줄 소개를 조회합니다.")
+    @Operation(summary = "프로필 수정용 정보 조회 API", description = "프로필 수정 화면에 진입할 때 필요한 기존 정보(이름, 나이, 위치, 소개 등)를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = ProfileUpdateResponse.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @GetMapping("/me/profile")
     public ResponseEntity<BasicResponse<ProfileUpdateResponse>> getProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
@@ -63,7 +82,11 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "관심사 수정 API", description = "온보딩 및 관심사 수정 시 관심사를 수정합니다.")
+    @Operation(summary = "관심사 수정 API", description = "관심사 수정 시 관심사를 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = InterestResponse.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @PutMapping("/me/interest")
     public ResponseEntity<BasicResponse<InterestResponse>> updateInterest(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -79,6 +102,7 @@ public class ProfileController {
     }
 
     @Operation(summary = "관심사 조회 API", description = "온보딩 및 관심사 수정 시 관심사들을 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = InterestCategoryResponse.class)))
     @GetMapping("/me/interest")
     public ResponseEntity<BasicResponse<InterestCategoryResponse>> getInterestCategory() {
         return ResponseEntity.ok()
@@ -86,13 +110,18 @@ public class ProfileController {
     }
 
     @Operation(summary = "성향 조회 API", description = "온본딩 및 성향 수정 시 성향들을 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = PersonalityCategoryResponse.class)))
     @GetMapping("/me/personality")
     public ResponseEntity<BasicResponse<PersonalityCategoryResponse>> getPersonalityCategory() {
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, profileService.getAllPersonality()));
     }
 
-    @Operation(summary = "성향 수정 API", description = "온보딩 및 성향 수정 시 성향을 수정합니다.")
+    @Operation(summary = "성향 수정 API", description = "성향 수정 시 성향을 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = PersonalityUpdateResponse.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @PutMapping("/me/personality")
     public ResponseEntity<BasicResponse<PersonalityUpdateResponse>> updatePersonality(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -107,7 +136,11 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "프로필 조회 API", description = "내 프로필을 조회합니다.")
+    @Operation(summary = "내 프로필 상세 조회 API", description = "마이페이지 등에서 내 프로필 전체 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(description = "200", responseCode = "요청 성공", content = @Content(schema = @Schema(implementation = MyProfileResponse.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @GetMapping("/me")
     public ResponseEntity<BasicResponse<MyProfileResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
@@ -121,10 +154,15 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "상대방 프로필 조회 API", description = "상대방 프로필을 조회합니다.")
+    @Operation(summary = "상대방 프로필 조회 API", description = "타인의 프로필을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(description = "200", responseCode = "요청 성공", content = @Content(schema = @Schema(implementation = OtherProfileResponse.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
+    })
     @GetMapping("/{targetId}")
     public ResponseEntity<BasicResponse<OtherProfileResponse>> getOtherProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Parameter(description = "조회할 상대방 회원 ID", example = "1")
             @PathVariable Long targetId
     ) {
         Long myId = customUserDetails.getMemberId();
@@ -137,6 +175,10 @@ public class ProfileController {
     }
 
     @Operation(summary = "추천/비추천 토글 API", description = "프로필에서 추천/비추천 토글기능입니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "404", description = "MEMBER4001: 해당 사용자를 찾을 수 없습니다."),
+    })
     @PostMapping("/evaluation/toggle")
     public ResponseEntity<BasicResponse<String>> toggleEvaluation(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
