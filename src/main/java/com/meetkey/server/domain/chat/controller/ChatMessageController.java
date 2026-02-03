@@ -18,14 +18,14 @@ import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "채팅 메시지 API")
+@Tag(name = "채팅 메시지 API By 슝슝")
 @RequestMapping("/chat")
 public class ChatMessageController {
 
     private final ChatMessageCommandService chatMessageCommandService;
     private final ChatRedisPublisher chatRedisPublisher;
 
-    @Operation(summary = "메시지 전송 API by 슝슝", description = "채팅방에 메시지를 전송하는 API by 슝슝")
+    @Operation(summary = "메시지 전송 API", description = "채팅방에 메시지를 전송합니다. HTTP 호출이 아닌 WebSocket(STOMP) 프로토콜로 동작합니다.")
     @MessageMapping("/send")
     public void sendMessage(@Payload ChatMessageSendReqDTO req, Principal principal) {
         CustomUserDetails details = (CustomUserDetails) principal;
