@@ -82,7 +82,7 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, response));
     }
 
-    @Operation(summary = "관심사 수정 API", description = "온보딩 및 관심사 수정 시 관심사를 수정합니다.")
+    @Operation(summary = "관심사 수정 API", description = "관심사 수정 시 관심사를 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = InterestResponse.class))),
             @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
@@ -117,7 +117,7 @@ public class ProfileController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, profileService.getAllPersonality()));
     }
 
-    @Operation(summary = "성향 수정 API", description = "온보딩 및 성향 수정 시 성향을 수정합니다.")
+    @Operation(summary = "성향 수정 API", description = "성향 수정 시 성향을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = PersonalityUpdateResponse.class))),
             @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")
