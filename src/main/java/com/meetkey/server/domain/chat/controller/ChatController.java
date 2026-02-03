@@ -17,14 +17,14 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "채팅 API")
+@Tag(name = "채팅 API By 제인")
 @RequestMapping("/chat-room")
 public class ChatController {
 
     private final ChatCommandService chatCommandService;
     private final ChatQueryService chatQueryService;
 
-    @Operation(summary = "채팅방 생성 API by 제인", description = "채팅방을 생성하는 API by 제인")
+    @Operation(summary = "채팅방 생성 API", description = "채팅방을 생성하는 API")
     @PostMapping
     public BasicResponse<ChatResDTO.CreateChatRoomRes> createChatRoom(
             @RequestBody ChatReqDTO.CreateChatRoomReq req
@@ -34,7 +34,7 @@ public class ChatController {
         return BasicResponse.success(CommonSuccessStatus._OK, chatRoom);
     }
 
-    @Operation(summary = "채팅방 나가기 API by 제인", description = "채팅방을 생성하는 API by 제인")
+    @Operation(summary = "채팅방 나가기 API", description = "채팅방을 생성하는 API")
     @DeleteMapping("/{chatRoomId}")
     public BasicResponse<Void> deleteChatRoom(
             @AuthenticationPrincipal CustomUserDetails details
@@ -44,7 +44,7 @@ public class ChatController {
         return BasicResponse.success(CommonSuccessStatus._OK, null);
     }
 
-    @Operation(summary = "채팅방 목록 조회 API by 제인", description = "채팅방을 생성하는 API by 제인")
+    @Operation(summary = "채팅방 목록 조회 API", description = "채팅방을 생성하는 API")
     @GetMapping
     public BasicResponse<List<ChatResDTO.ChatPreviewRes>> findChatRoomList(
             @AuthenticationPrincipal CustomUserDetails details
@@ -53,7 +53,7 @@ public class ChatController {
         return BasicResponse.success(CommonSuccessStatus._OK, chatRoomList);
     }
 
-    @Operation(summary = "채팅방 상세 조회 API by 제인", description = "채팅방을 생성하는 API by 제인")
+    @Operation(summary = "채팅방 상세 조회 API", description = "채팅방을 생성하는 API")
     @GetMapping("/{chatRoomId}/messages")
     public BasicResponse<ChatResDTO.ChatMessageListRes> findChatRoom(
             @PathVariable Long chatRoomId
@@ -64,7 +64,7 @@ public class ChatController {
         return BasicResponse.success(CommonSuccessStatus._OK, chatMessageList);
     }
 
-    @Operation(summary = "채팅방 메세지 읽음 처리 API by 제인", description = "채팅방을 생성하는 API by 제인")
+    @Operation(summary = "채팅방 메세지 읽음 처리 API", description = "채팅방을 생성하는 API")
     @PatchMapping("/{chatRoomId}/read")
     public BasicResponse<Void> findChatRoom(
             @PathVariable Long chatRoomId

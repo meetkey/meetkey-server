@@ -13,7 +13,7 @@ public class ChatMessagePublisher {
 
     public void publish(ChatMessagePubDTO dto) {
         messagingTemplate.convertAndSend(
-                "/sub/chat/" + dto.getChatRoomId(),
+                "/sub/chat-room/" + dto.getChatRoomId(),
                 dto
         );
     }
