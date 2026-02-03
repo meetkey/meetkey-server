@@ -1,6 +1,6 @@
-package com.meetkey.server.global.config;
+package com.meetkey.server.global.websocket.config;
 
-import com.meetkey.server.global.security.websocket.StompAuthChannelInterceptor;
+import com.meetkey.server.global.websocket.security.StompAuthChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;

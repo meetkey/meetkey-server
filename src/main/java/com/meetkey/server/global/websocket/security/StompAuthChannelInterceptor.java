@@ -1,5 +1,7 @@
-package com.meetkey.server.global.security.websocket;
+package com.meetkey.server.global.websocket.security;
 
+import com.meetkey.server.global.websocket.code.StompErrorCode;
+import com.meetkey.server.global.websocket.exception.StompException;
 import com.meetkey.server.global.security.CustomUserDetails;
 import com.meetkey.server.global.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +31,13 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
             String authHeader = accessor.getFirstNativeHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new IllegalStateException("Authorization header missing");
+                throw new StompException(StompErrorCode.STOMP_AUTH_HEADER_MISSING, "Authorization header is missing or invalid");
             }
 
             String token = authHeader.substring(7);
 
             if (!jwtUtil.isValid(token, true)) {
-                throw new IllegalStateException("Invalid JWT");
+                throw new StompException(StompErrorCode.STOMP_INVALID_TOKEN, "JWT is expired or invalid");
             }
 
             String memberId = jwtUtil.getUsername(token);

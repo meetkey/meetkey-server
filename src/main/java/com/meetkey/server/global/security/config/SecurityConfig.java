@@ -1,13 +1,11 @@
-package com.meetkey.server.global.config;
+package com.meetkey.server.global.security.config;
 
 import com.meetkey.server.domain.auth.repository.RefreshTokenRepository;
-import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.security.jwt.JwtUtil;
 import com.meetkey.server.global.security.jwt.filter.CustomLogoutFilter;
 import com.meetkey.server.global.security.jwt.filter.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;

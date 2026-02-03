@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Chat WebSocket Test</title>
+
+    <!-- SockJS & STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; }
+        input, button { margin: 4px; }
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 8px;
+        }
+        .msg {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>🧪 Chat WebSocket Test</h2>
+
+<div>
+    <label>JWT Access Token</label><br/>
+    <input id="token" type="text" size="100"
+           placeholder="Bearer 없이 access token만 입력" />
+</div>
+
+<div>
+    <label>Chat Room ID</label><br/>
+    <input id="roomId" type="number" placeholder="예: 1" />
+</div>
+
+<div>
+    <button onclick="connect()">1️⃣ Connect</button>
+    <button onclick="subscribe()">2️⃣ Subscribe</button>
+</div>
+
+<hr/>
+
+<div>
+    <input id="message" type="text" size="50" placeholder="메시지 입력" />
+    <button onclick="sendMessage()">3️⃣ Send</button>
+</div>
+
+<h3>📨 Messages</h3>
+<div id="messages"></div>
+
+<script>
+    let stompClient = null;
+
+    function connect() {
+        const socket = new SockJS("http://localhost:8080/ws-chat");
+        stompClient = Stomp.over(socket);
+
+        const token = document.getElementById("token").value;
+
+        stompClient.connect(
+            {
+                Authorization: "Bearer " + token
+            },
+            function (frame) {
+                console.log("Connected:", frame);
+                alert("WebSocket 연결 성공");
+            },
+            function (errorFrame) {
+                handleStompError(errorFrame);
+            }
+        );
+    }
+
+    function handleStompError(frame) {
+        console.error("STOMP ERROR FRAME:", frame);
+
+        const stompCode = frame.headers["message"]; // STOMP 에러 코드
+        const httpStatus = frame.headers["mapped-http-status"]; // 매핑된 HTTP 상태
+        const detailMessage = frame.body;
+
+        appendSystemMessage(
+            `ERROR [${stompCode}] (HTTP ${httpStatus}) : ${detailMessage}`
+        );
+
+        // HTTP 의미 기반 분기
+        if (httpStatus === "401") {
+            alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+            stompClient.disconnect();
+        }
+
+        if (httpStatus === "403") {
+            alert("권한이 없습니다.");
+        }
+    }
+
+    function subscribe() {
+        const roomId = document.getElementById("roomId").value;
+
+        stompClient.subscribe(
+            "/sub/chat/" + roomId,
+            function (message) {
+                const body = JSON.parse(message.body);
+                appendMessage(body);
+            }
+        );
+
+        alert("채팅방 구독 완료");
+    }
+
+    function sendMessage() {
+        const roomId = document.getElementById("roomId").value;
+        const content = document.getElementById("message").value;
+
+        stompClient.send(
+            "/pub/chat/send",
+            {},
+            JSON.stringify({
+                chatRoomId: Number(roomId),
+                messageType: "TEXT",
+                content: content
+            })
+        );
+
+        document.getElementById("message").value = "";
+    }
+
+    function appendMessage(msg) {
+        const box = document.getElementById("messages");
+        const div = document.createElement("div");
+        div.className = "msg";
+        div.innerText =
+            `[${msg.createdAt}] memberId=${msg.senderId} : ${msg.content}`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

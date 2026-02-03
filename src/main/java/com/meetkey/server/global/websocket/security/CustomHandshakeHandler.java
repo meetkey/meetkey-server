@@ -1,4 +1,4 @@
-package com.meetkey.server.global.security.websocket;
+package com.meetkey.server.global.websocket.security;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.stereotype.Component;
