@@ -21,6 +21,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -60,8 +61,8 @@ public class ChatQueryService {
         Pageable pageable = PageRequest.of(0, 30);
 
         Slice<ChatMessage> slice = (cursorId == null)
-                ? chatMessageRepository.findByChatRoomOrderByIdDesc(chatRoom, pageable)
-                : chatMessageRepository.findByChatRoomAndIdLessThanOrderByIdDesc(chatRoom, cursorId, pageable);
+                ? chatMessageRepository.findByChatRoomOrderByIdAsc(chatRoom, pageable)
+                : chatMessageRepository.findByChatRoomAndIdLessThanOrderByIdAsc(chatRoom, cursorId, pageable);
 
         List<ChatMessage> content = slice.getContent();
 

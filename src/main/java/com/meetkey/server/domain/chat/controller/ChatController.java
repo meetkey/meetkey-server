@@ -57,7 +57,7 @@ public class ChatController {
     @GetMapping("/{chatRoomId}/messages")
     public BasicResponse<ChatResDTO.ChatMessageListRes> findChatRoom(
             @PathVariable Long chatRoomId
-            ,@RequestParam Long cursorId
+            ,@RequestParam(required = false) Long cursorId
             ,@AuthenticationPrincipal CustomUserDetails details
     ){
         ChatResDTO.ChatMessageListRes chatMessageList = chatQueryService.getChatMessageList(details.getMemberId(), chatRoomId, cursorId);

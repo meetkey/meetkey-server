@@ -11,9 +11,9 @@ import java.util.Optional;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
-    Slice<ChatMessage> findByChatRoomOrderByIdDesc(ChatRoom chatRoom, Pageable pageable);
+    Slice<ChatMessage> findByChatRoomOrderByIdAsc(ChatRoom chatRoom, Pageable pageable);
 
-    Slice<ChatMessage> findByChatRoomAndIdLessThanOrderByIdDesc(
+    Slice<ChatMessage> findByChatRoomAndIdLessThanOrderByIdAsc(
             ChatRoom chatRoom,
             Long cursorId,
             Pageable pageable
