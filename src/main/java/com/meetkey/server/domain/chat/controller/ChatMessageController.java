@@ -11,15 +11,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 @Tag(name = "채팅 메시지 API By 슝슝")
-@RequestMapping("/chat")
+@MessageMapping("/chat")
 public class ChatMessageController {
 
     private final ChatMessageCommandService chatMessageCommandService;

@@ -101,7 +101,7 @@
         const roomId = document.getElementById("roomId").value;
 
         stompClient.subscribe(
-            "/sub/chat/" + roomId,
+            "/sub/chat-room/" + roomId,
             function (message) {
                 const body = JSON.parse(message.body);
                 appendMessage(body);
