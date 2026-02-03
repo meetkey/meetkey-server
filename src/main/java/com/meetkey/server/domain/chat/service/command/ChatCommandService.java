@@ -13,7 +13,6 @@ import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.chat.exception.ChatException;
 import com.meetkey.server.global.apiPayload.exception.GeneralException;
-import com.meetkey.server.global.apiPayload.status.ChatErrorCode;
 import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

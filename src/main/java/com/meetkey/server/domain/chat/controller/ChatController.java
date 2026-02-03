@@ -1,8 +1,12 @@
 package com.meetkey.server.domain.chat.controller;
 
+import com.meetkey.server.domain.chat.dto.request.ChatMessageSendReqDTO;
 import com.meetkey.server.domain.chat.dto.request.ChatReqDTO;
+import com.meetkey.server.domain.chat.dto.response.ChatMessageResDTO;
 import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
+import com.meetkey.server.domain.chat.entity.ChatMessage;
 import com.meetkey.server.domain.chat.service.command.ChatCommandService;
+import com.meetkey.server.domain.chat.service.command.ChatMessageCommandService;
 import com.meetkey.server.domain.chat.service.query.ChatQueryService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
@@ -10,6 +14,8 @@ import com.meetkey.server.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +29,8 @@ public class ChatController {
 
     private final ChatCommandService chatCommandService;
     private final ChatQueryService chatQueryService;
+    private final ChatMessageCommandService chatMessageCommandService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Operation(summary = "채팅방 생성 API by 제인", description = "채팅방을 생성하는 API by 제인")
     @PostMapping
@@ -72,5 +80,22 @@ public class ChatController {
     ) {
         chatCommandService.readMessages(details.getMemberId(), chatRoomId);
         return BasicResponse.success(CommonSuccessStatus._OK, null);
+    }
+
+    @MessageMapping("/chat/send")
+    public void sendMessage(ChatMessageSendReqDTO req, @AuthenticationPrincipal CustomUserDetails details) {
+        Long senderId = details.getMemberId();
+
+        ChatMessage message = chatMessageCommandService.sendMessage(
+                senderId,
+                req.getChatRoomId(),
+                req.getMessageType(),
+                req.getContent(),
+                req.getMediaUrl(),
+                req.getDuration()
+        );
+
+        // 같은 채팅방 구독자에게 broadcast
+        messagingTemplate.convertAndSend("/sub/chat/" + req.getChatRoomId(), ChatMessageResDTO.from(message));
     }
 }
