@@ -16,10 +16,12 @@ import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Auth", description = "인증 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -99,9 +102,15 @@ public class AuthController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, jwts));
     }
 
-    @Operation(summary = "인증번호 발송 API", description = "phone 해당하는 번호에 인증번호를 발송합니다.")
+    @Operation(summary = "인증번호 발송 API", description = "phone 해당하는 번호에 인증번호를 발송합니다., 전화번호는 '-' 없이 숫자만 입력해주세요. (ex: 01012345678)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공",  content =  @Content(schema = @Schema(implementation = Boolean.class))),
+            @ApiResponse(responseCode = "500", description = "AUTH5001: 인증번호 발송 실패(외부 API 오류)")
+    })
     @PostMapping("/sms/send")
-    public ResponseEntity<BasicResponse<Boolean>> sendAuthCode(@RequestParam String phone) {
+    public ResponseEntity<BasicResponse<Boolean>> sendAuthCode(
+            @Parameter(description = "인증번호 받을 전화번호", example = "01012345678")
+            @RequestParam("phone") String phone) {
         smsService.sendAuthCode(phone);
 
         return ResponseEntity
@@ -110,11 +119,17 @@ public class AuthController {
     }
 
     @Operation(summary = "인증번호 검증 API", description = "인증번호가 일치하는지 검증합니다. (인증시간 180초)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공",  content =  @Content(schema = @Schema(implementation = Boolean.class))),
+            @ApiResponse(responseCode = "400", description = "AUTH4002: 인증번호 불일치, MEMBER4041: 사용자를 찾을 수 없음"),
+    })
     @PostMapping("/sms/verify")
     public ResponseEntity<BasicResponse<Boolean>> verifyAuthCode(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestParam String phone,
-            @RequestParam String code
+            @Parameter(description = "인증번호 받을 전화번호", example = "01012345678")
+            @RequestParam("phone") String phone,
+            @Parameter(description = "수신받은 인증번호", example = "123456")
+            @RequestParam("code") String code
     ) {
 
         Long memberId = customUserDetails.getMemberId();
