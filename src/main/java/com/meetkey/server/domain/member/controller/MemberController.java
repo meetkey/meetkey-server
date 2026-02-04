@@ -28,7 +28,7 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @Operation(summary = "FCM 토큰 저장 API", description = "사용자의 FCM 토큰을 저장합니다.")
+    @Operation(summary = "FCM 토큰 저장 API", description = "사용자의 FCM 토큰을 저장합니다. (앱이 켜지거나 로그인시에 호출)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = String.class ))),
             @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다.")

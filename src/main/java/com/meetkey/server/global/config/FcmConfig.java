@@ -14,7 +14,7 @@ import java.io.InputStream;
 @Configuration
 public class FcmConfig {
 
-    @Value("${fcm.key-path}")
+    @Value("${fcm.key.path}")
     private String fcmKeyPath;
 
     @PostConstruct
