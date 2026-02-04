@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
         configuration = OauthConfig.class
 )
 public interface AppleOauthClient {
-    // @Cacheable(cacheNames = "AppleOICD", cacheManager = "oidcCacheManager")
+    @Cacheable(cacheNames = "AppleOICD", cacheManager = "oidcCacheManager")
     @GetMapping("/auth/keys")
     OidcDTO.OIDCPublicKeys getAppleOIDCOpenKeys();
 }

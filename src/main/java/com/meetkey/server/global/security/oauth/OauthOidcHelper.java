@@ -20,12 +20,12 @@ public class OauthOidcHelper {
 
         // kid 에 맞는 공개키를 가져옴
         OidcDTO.OIDCPublicKey publicKey  =
-                response.keys().stream()
-                        .filter(o -> o.kid().equals(kid))
+                response.getKeys().stream()
+                        .filter(o -> o.getKid().equals(kid))
                         .findFirst()
                         .orElseThrow();
 
-        return jwtOIDCProvider.getOIDCTokenBody(token, publicKey.n(), publicKey.e());
+        return jwtOIDCProvider.getOIDCTokenBody(token, publicKey.getN(), publicKey.getE());
     }
 
 }

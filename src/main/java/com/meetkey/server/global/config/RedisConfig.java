@@ -1,22 +1,30 @@
 package com.meetkey.server.global.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.time.Duration;
+
 @Configuration
+@EnableCaching
 public class RedisConfig {
     @Value("${spring.data.redis.chat.host}")
     private String chatHost;
@@ -86,6 +94,40 @@ public class RedisConfig {
         template.setConnectionFactory(connectionFactory);
         return template;
     }
+
+    // OIDC 공개용 키 저장
+    @Bean
+    public RedisCacheManager oidcCacheManager(
+            @Qualifier("authRedisConnectionFactory")  RedisConnectionFactory connectionFactory
+    ){
+        ObjectMapper cacheMapper = new ObjectMapper();
+        cacheMapper.registerModule(new JavaTimeModule());
+        cacheMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // 타입 정보 활성화
+        cacheMapper.activateDefaultTyping(
+                cacheMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
+        );
+
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
+                )
+                .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper))
+                )
+                // 키 앞에 "jwk:" 접두사를 붙임
+                .computePrefixWith(cacheName -> "jwk:" + cacheName + "::")
+                .entryTtl(Duration.ofDays(3));
+
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(connectionFactory)
+                .cacheDefaults(config)
+                .build();
+    }
+
 }
 
 

@@ -15,6 +15,7 @@ import com.meetkey.server.global.security.jwt.JwtUtil;
 import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
+import com.meetkey.server.global.security.oauth.kakao.KakaoOauthClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     private final SmsService smsService;
+    private final KakaoOauthClient kakaoOauthClient;
 
 
     @Value("${admin.secret}")
@@ -138,6 +140,14 @@ public class AuthController {
         return ResponseEntity
                 .ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, true));
+    }
+
+
+    @GetMapping("/test/kakao-keys")
+    public ResponseEntity<?> getKeys() {
+        // 호출할 때마다 로그를 찍어서 캐시 동작 확인
+        System.out.println("Calling AppleOauthClient...");
+        return ResponseEntity.ok(kakaoOauthClient.getKakaoOIDCOpenKeys());
     }
 
 }
