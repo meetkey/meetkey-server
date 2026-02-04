@@ -32,6 +32,7 @@ jobs:
       - name: Run tests
         run: ./gradlew test --stacktrace --no-daemon
         env:
+          SPRING_PROFILES_ACTIVE: local
           SPRING_DATA_REDIS_CHAT_HOST: localhost
           SPRING_DATA_REDIS_CHAT_PORT: 6379
           SPRING_DATA_REDIS_AUTH_HOST: localhost
