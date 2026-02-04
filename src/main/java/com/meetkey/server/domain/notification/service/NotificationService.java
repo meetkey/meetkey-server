@@ -2,8 +2,13 @@ package com.meetkey.server.domain.notification.service;
 
 import com.meetkey.server.domain.chat.entity.ChatMessage;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.exception.MemberErrorStatus;
+import com.meetkey.server.domain.member.exception.MemberException;
+import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.notification.entity.PersonalNotification;
 import com.meetkey.server.domain.notification.enums.NotificationType;
+import com.meetkey.server.domain.notification.exception.NotificationErrorStatus;
+import com.meetkey.server.domain.notification.exception.NotificationException;
 import com.meetkey.server.domain.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final FcmService fcmService;
+    private final MemberRepository memberRepository;
 
     // 알림 전송 및 저장
     public void sendNotification(Member sender, Member receiver, NotificationType type, String messageContent, ChatMessage chatMessage) {
@@ -33,6 +39,30 @@ public class NotificationService {
             createNotification(sender, receiver, type, title, messageContent, chatMessage);
         }
 
+    }
+
+    // 알림 하나를 클릭했을 때
+    public void readNotification(Long notificationId, Long receiverId) {
+        Member receiver = memberRepository.findById(receiverId).orElseThrow(
+                () -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+
+        PersonalNotification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorStatus.NOTIFICATION_NOT_FOUND));
+
+        // 내 알림이 맞는지 확인
+        if (!notification.getReceiver().getId().equals(receiver.getId())) {
+            throw new NotificationException(NotificationErrorStatus.NOTIFICATION_FORBIDDEN);
+        }
+
+        if (notification.isRead()) {
+            return;
+        }
+
+        notification.read();
+    }
+
+    public void readNotificationBySender(Member receiver, Member sender) {
+        notificationRepository.markAsReadBySender(receiver, sender);
     }
 
     private void handleMessageNotification(Member sender, Member receiver, NotificationType type, String title, String content, ChatMessage chatMessage) {
@@ -49,6 +79,7 @@ public class NotificationService {
             createNotification(sender, receiver, type, title, content, chatMessage);
         }
     }
+
 
     private void createNotification(Member sender, Member receiver, NotificationType type, String title, String content, ChatMessage chatMessage) {
         PersonalNotification notification = PersonalNotification.builder()

@@ -50,8 +50,12 @@ public class PersonalNotification extends BaseEntity {
         this.isRead = false;
     }
 
-    public void isRead(boolean isRead) {
-        this.isRead = isRead;
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void read() {
+        this.isRead = true;
     }
 
 }

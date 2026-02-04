@@ -15,6 +15,7 @@ import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.chat.exception.ChatException;
+import com.meetkey.server.domain.notification.service.NotificationService;
 import com.meetkey.server.global.apiPayload.exception.GeneralException;
 import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class ChatCommandService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final MemberRepository memberRepository;
+    private final NotificationService notificationService;
 
     // 채팅방 생성
     public ChatResDTO.CreateChatRoomRes createChatRoom(ChatReqDTO.CreateChatRoomReq req, Long memberId){
@@ -79,6 +81,13 @@ public class ChatCommandService {
         ChatRoomMember myChatRoomMember =
                 chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
                         .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+        // 알림 로직 -> 상대방이 보낸 알림들 읽음 처리
+        Member partner = chatRoomMemberRepository.findPartner(chatRoomId, memberId)
+                .orElse(null);
+        if (partner != null) {
+            notificationService.readNotificationBySender(member, partner);
+        }
 
         // 채팅방의 가장 최신 메시지 조회
         ChatMessage latestMessage = chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom).orElse(null);
