@@ -4,12 +4,14 @@ package com.meetkey.server.domain.member.service;
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.SocialLogin;
+import com.meetkey.server.domain.member.entity.mapping.FcmToken;
 import com.meetkey.server.domain.member.enums.Provider;
 import com.meetkey.server.domain.member.enums.Role;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.repository.SocialLoginRepository;
+import com.meetkey.server.domain.notification.repository.FcmTokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final SocialLoginRepository socialLoginRepository;
+    private final FcmTokenRepository fcmTokenRepository;
 
     @Transactional
     public Member signup(Provider provider, String providerId, MemberReqDTO.Signup req) {
@@ -69,5 +72,21 @@ public class MemberService {
         socialLoginRepository.save(socialMember);
 
         return member;
+    }
+
+    // FCM 토큰 저장
+    @Transactional
+    public void saveFcmToken(Long memberId, String token) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+
+        boolean isExist = fcmTokenRepository.existsByMemberAndToken(member, token);
+        if (!isExist) {
+            fcmTokenRepository.save(FcmToken.builder()
+                    .member(member)
+                    .token(token)
+                    .build());
+        }
+
     }
 }

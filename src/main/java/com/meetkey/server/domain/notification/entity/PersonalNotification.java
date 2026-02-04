@@ -44,4 +44,15 @@ public class PersonalNotification extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private ChatMessage chatMessage;
 
+    public void renewNotification(String newContent, ChatMessage newChatMessage) {
+        this.content = newContent;
+        this.chatMessage = newChatMessage;
+        this.isRead = false;
+    }
+
+    public void isRead(boolean isRead) {
+        this.isRead = isRead;
+    }
+
 }
+
