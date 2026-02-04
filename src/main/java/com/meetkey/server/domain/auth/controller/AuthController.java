@@ -11,11 +11,10 @@ import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
 import com.meetkey.server.global.security.CustomUserDetails;
-import com.meetkey.server.global.security.jwt.JwtUtil;
 import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
-import com.meetkey.server.global.security.oauth.kakao.KakaoOauthClient;
+import com.meetkey.server.global.security.oauth.kakao.KakaoOidcService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,7 +37,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     private final SmsService smsService;
-    private final KakaoOauthClient kakaoOauthClient;
+    private final KakaoOidcService kakaoOidcService;
 
 
     @Value("${admin.secret}")
@@ -146,8 +145,7 @@ public class AuthController {
     @GetMapping("/test/kakao-keys")
     public ResponseEntity<?> getKeys() {
         // 호출할 때마다 로그를 찍어서 캐시 동작 확인
-        System.out.println("Calling AppleOauthClient...");
-        return ResponseEntity.ok(kakaoOauthClient.getKakaoOIDCOpenKeys());
+        return ResponseEntity.ok(kakaoOidcService.getKakaoOIDCOpenKeys());
     }
 
 }

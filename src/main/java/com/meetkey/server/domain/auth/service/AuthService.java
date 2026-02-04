@@ -17,7 +17,7 @@ import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
 import com.meetkey.server.domain.auth.exception.AuthException;
 import com.meetkey.server.global.security.oauth.dto.OidcDTO;
-import com.meetkey.server.global.security.oauth.kakao.KakaoOauthClient;
+import com.meetkey.server.global.security.oauth.kakao.KakaoOidcService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class AuthService {
     @Value(("{apple.app-key}"))
     private String appleAppKey;
 
-    private final KakaoOauthClient kakaoClient;
+    private final KakaoOidcService kakaoOidcService;
     private final AppleOauthClient appleClient;
 
     private final OauthOidcHelper oAuthOIDCHelper;
@@ -173,7 +173,7 @@ public class AuthService {
     }
 
     private String getKakaoProviderIdFromIdToken(String idToken){
-        OidcDTO.OIDCPublicKeys response = kakaoClient.getKakaoOIDCOpenKeys();
+        OidcDTO.OIDCPublicKeys response = kakaoOidcService.getKakaoOIDCOpenKeys();
         OidcDTO.OIDCDecodePayload payload = oAuthOIDCHelper.getPayloadFromIdToken(
                 idToken,
                 "https://kauth.kakao.com",
