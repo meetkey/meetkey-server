@@ -169,7 +169,7 @@ public class AuthService {
                 response
         );
 
-        return payload.getSub();
+        return payload.sub();
     }
 
     private String getKakaoProviderIdFromIdToken(String idToken){
@@ -181,7 +181,7 @@ public class AuthService {
                 response
         );
 
-        return payload.getSub();
+        return payload.sub();
     }
 
 }
