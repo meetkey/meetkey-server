@@ -14,20 +14,20 @@ import java.time.LocalDateTime;
 public class ChatMessagePubDTO {
 
     private Long chatRoomId;
+    private Long messageId;
     private Long senderId;
     private MessageType messageType;
     private String content;
-    private String mediaUrl;
     private Integer duration;
     private LocalDateTime createdAt;
 
     public static ChatMessagePubDTO from(ChatMessage message) {
         return new ChatMessagePubDTO(
                 message.getChatRoom().getId(),
+                message.getId(),
                 message.getMember().getId(),
                 message.getMessageType(),
                 message.getContent(),
-                message.getMediaUrl(),
                 message.getDuration(),
                 message.getCreatedAt()
         );

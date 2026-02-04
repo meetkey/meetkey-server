@@ -10,6 +10,8 @@ import com.meetkey.server.domain.chat.repository.ChatMessageRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomMemberRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomRepository;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.exception.MemberErrorStatus;
+import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.chat.exception.ChatException;
 import com.meetkey.server.global.apiPayload.exception.GeneralException;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -35,33 +38,54 @@ public class ChatQueryService {
 
     // 채팅방 목록 조회
     public List<ChatResDTO.ChatPreviewRes> getChatRoomList(Long memberId){
-        //TODO: 나중에 만들어질 MemberErrorCode로 바꾸기
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
 
-        // TODO: 안 읽은 거 다 계산해야됨
-        List<ChatResDTO.ChatPreviewRes> list = chatRoomMemberRepository.findOppChatRooomMembersOrderByUpdatedAtDesc(memberId)
-                .stream().map(ChatConverter::toChatPreviewRes)
+        return chatRoomMemberRepository
+                .findOppChatRooomMembersOrderByUpdatedAtDesc(memberId) // 상대 기준
+                .stream()
+                .map(opponentChatRoomMember -> {
+                    ChatRoom chatRoom = opponentChatRoomMember.getChatRoom();
+                    ChatRoomMember myChatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                                    .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+                    // 미리보리용 최신 메시지
+                    ChatMessage lastMessage = chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom).orElse(null);
+
+                    // myChatRoomMember의 unreadCount 계산
+                    ChatMessage lastReadMsg = myChatRoomMember.getLastReadMsg();
+
+                    long unreadCount = (lastReadMsg == null)
+                            ? chatMessageRepository.countByChatRoom(chatRoom)
+                            : chatMessageRepository.countByChatRoomAndIdGreaterThan(chatRoom, lastReadMsg.getId());
+
+                    return ChatConverter.toChatPreviewRes(
+                            opponentChatRoomMember,
+                            lastMessage,
+                            unreadCount
+                    );
+                })
                 .toList();
-        return list;
     }
 
     // 채팅방 상세 조회
     public ChatResDTO.ChatMessageListRes getChatMessageList(Long memberId, Long chatRoomId, Long cursorId){
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
-
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
-        ChatRoomMember oppenetChatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+
+        ChatRoomMember myChatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
+        ChatRoomMember opponentChatRoomMember = chatRoomMemberRepository.findByChatRoomAndMemberNot(chatRoom, member)
                 .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
 
-        // 값 받게끔 수정
+        
         Pageable pageable = PageRequest.of(0, 30);
 
         Slice<ChatMessage> slice = (cursorId == null)
-                ? chatMessageRepository.findByChatRoomOrderByIdDesc(chatRoom, pageable)
-                : chatMessageRepository.findByChatRoomAndIdLessThanOrderByIdDesc(chatRoom, cursorId, pageable);
+                ? chatMessageRepository.findByChatRoomOrderByIdAsc(chatRoom, pageable)
+                : chatMessageRepository.findByChatRoomAndIdLessThanOrderByIdAsc(chatRoom, cursorId, pageable);
 
         List<ChatMessage> content = slice.getContent();
 
@@ -69,6 +93,6 @@ public class ChatQueryService {
                 ? null
                 : content.get(content.size() - 1).getId();
 
-        return ChatConverter.toChatMessageListRes(oppenetChatRoomMember, content, nextCursor, slice.hasNext());
+        return ChatConverter.toChatMessageListRes(opponentChatRoomMember, content, nextCursor, slice.hasNext(), memberId);
     }
 }

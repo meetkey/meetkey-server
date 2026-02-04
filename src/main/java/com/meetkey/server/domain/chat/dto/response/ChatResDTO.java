@@ -26,6 +26,7 @@ public class ChatResDTO {
             ChatOpponentRes chatOpponent,
             String lastChatMessages,
             Integer unReadMessageCnt,
+            long unreadCount,
             LocalDateTime updatedAt
     ){}
 
@@ -34,17 +35,9 @@ public class ChatResDTO {
     public record ChatMessageListRes(
             Long roomId,
             ChatOpponentRes chatOpponent,
-            List<ChatMessageRes> chatMessages,
+            List<ChatMessageResDTO> chatMessages,
             Long nextCursor,
             Boolean hasNext
-    ){}
-
-    @Builder
-    public record ChatMessageRes(
-            Long messageId,
-            Long senderId,
-            String content,
-            LocalDateTime createdAt
     ){}
 
     @Builder

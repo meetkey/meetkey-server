@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.chat.converter;
 
+import com.meetkey.server.domain.chat.dto.response.ChatMessageResDTO;
 import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
 import com.meetkey.server.domain.chat.entity.ChatMessage;
 import com.meetkey.server.domain.chat.entity.ChatRoom;
@@ -35,7 +36,7 @@ public class ChatConverter {
                 .build();
     }
 
-    public static ChatResDTO.ChatPreviewRes toChatPreviewRes (ChatRoomMember chatRoomMember){
+    public static ChatResDTO.ChatPreviewRes toChatPreviewRes (ChatRoomMember chatRoomMember, ChatMessage lastMessage, long unreadCount){
 
         Member member = chatRoomMember.getMember();
         ChatRoom chatRoom = chatRoomMember.getChatRoom();
@@ -44,9 +45,8 @@ public class ChatConverter {
         return ChatResDTO.ChatPreviewRes.builder()
                 .roomId(chatRoom.getId())
                 .chatOpponent(ChatConverter.toChatOpponentRes(member))
-                .lastChatMessages(lastReadMsg.getContent())
-                // TODO: 어떤 값 넣어두기 필요해보임
-//                .unReadMessageCnt(2)
+                .lastChatMessages(lastMessage != null ? lastMessage.getContent() : null)
+                .unreadCount(unreadCount)
                 .updatedAt(chatRoom.getUpdatedAt())
                 .build();
     }
@@ -59,24 +59,19 @@ public class ChatConverter {
                 .build();
     }
 
-    public static ChatResDTO.ChatMessageRes toChatMessageRes(ChatMessage chatMessage){
-        return ChatResDTO.ChatMessageRes.builder()
-                .messageId(chatMessage.getId())
-                .senderId(chatMessage.getMember().getId())
-                .content(chatMessage.getContent())
-                .createdAt(chatMessage.getCreatedAt())
-                .build();
-    }
-
     public static ChatResDTO.ChatMessageListRes toChatMessageListRes(
-            ChatRoomMember chatRoomMember, List<ChatMessage> chatMessageList,
-            Long nextCursor, Boolean hasNext
+            ChatRoomMember chatRoomMember,
+            List<ChatMessage> chatMessageList,
+            Long nextCursor,
+            Boolean hasNext,
+            Long currentMemberId
     ){
-
-        List<ChatResDTO.ChatMessageRes> chatMessages = chatMessageList.stream()
-                .map(ChatConverter::toChatMessageRes)
+        List<ChatMessageResDTO> chatMessages = chatMessageList.stream()
+                .map(msg -> ChatMessageResDTO.from(msg, currentMemberId))
                 .toList();
-        ChatResDTO.ChatOpponentRes chatOpponentRes = ChatConverter.toChatOpponentRes(chatRoomMember.getMember());
+
+        ChatResDTO.ChatOpponentRes chatOpponentRes =
+                ChatConverter.toChatOpponentRes(chatRoomMember.getMember());
 
         return ChatResDTO.ChatMessageListRes.builder()
                 .roomId(chatRoomMember.getChatRoom().getId())
@@ -86,5 +81,6 @@ public class ChatConverter {
                 .hasNext(hasNext)
                 .build();
     }
+
 
 }
