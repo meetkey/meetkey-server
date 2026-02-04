@@ -96,4 +96,19 @@ public class ChatCommandService {
         return (a < b) ? a + ":" + b : b + ":" + a;
     }
 
+    // 채팅방 알림 설정/해제 (토글)
+    public void toggleAlarm(Long memberId, Long chatRoomId, boolean isAlarm) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
+
+        ChatRoomMember myChatRoomMember =
+                chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
+                        .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
+
+        myChatRoomMember.toggleAlarm(isAlarm);
+    }
+
 }
