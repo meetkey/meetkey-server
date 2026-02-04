@@ -14,21 +14,29 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ADMIN_SECRET: ${ADMIN_SECRET}
       KAKAO_APP_KEY: ${KAKAO_APP_KEY}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+
       COOLSMS_API_KEY: ${COOLSMS_API_KEY}
       COOLSMS_API_SECRET: ${COOLSMS_API_SECRET}
       COOLSMS_SENDER: ${COOLSMS_SENDER}
     depends_on:
-      - redis
+      - redis-chat
+      - redis-auth
     networks:
       - spring-boot-app-network
 
-  redis: # Redis 서비스 추가!
+  redis-chat:
     image: redis:7-alpine
-    container_name: redis
+    container_name: redis-chat
     ports:
       - "6379:6379"
+    networks:
+      - spring-boot-app-network
+
+  redis-auth:
+    image: redis:7-alpine
+    container_name: redis-auth
+    ports:
+      - "6380:6379"
     networks:
       - spring-boot-app-network
 
