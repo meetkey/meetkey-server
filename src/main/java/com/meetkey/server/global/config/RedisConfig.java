@@ -23,6 +23,11 @@ public class RedisConfig {
     @Value("${spring.data.redis.auth.host}")
     private String authHost;
 
+    @Value("${spring.data.redis.chat.port:6379}")
+    private int chatPort;
+    @Value("${spring.data.redis.auth.port:6379}")
+    private int authPort;
+
     @Bean
     public ObjectMapper redisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -37,7 +42,7 @@ public class RedisConfig {
     public RedisConnectionFactory chatRedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(chatHost);
-        config.setPort(6379);
+        config.setPort(chatPort);
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
         factory.afterPropertiesSet();
@@ -49,7 +54,7 @@ public class RedisConfig {
     public RedisConnectionFactory authRedisConnectionFactory(){
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(authHost);
-        config.setPort(6379);
+        config.setPort(authPort);
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
         factory.afterPropertiesSet();
