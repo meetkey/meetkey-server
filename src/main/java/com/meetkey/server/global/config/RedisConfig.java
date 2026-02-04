@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -17,6 +18,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisConfig {
+    @Value("${spring.data.redis.chat.host}")
+    private String chatHost;
+    @Value("${spring.data.redis.auth.host}")
+    private String authHost;
+
     @Bean
     public ObjectMapper redisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -30,7 +36,7 @@ public class RedisConfig {
     @Primary
     public RedisConnectionFactory chatRedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName("redis-chat");
+        config.setHostName(chatHost);
         config.setPort(6379);
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
@@ -42,7 +48,7 @@ public class RedisConfig {
     @Bean
     public RedisConnectionFactory authRedisConnectionFactory(){
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName("redis-auth");
+        config.setHostName(authHost);
         config.setPort(6379);
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(config);

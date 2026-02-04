@@ -1,4 +1,10 @@
 spring:
+  data:
+    redis:
+      chat:
+        host: localhost
+      auth:
+        host: localhost
   jwt:
     secret: ${JWT_SECRET_KEY:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
 

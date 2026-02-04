@@ -7,6 +7,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      redis-chat:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+      redis-auth:
+        image: redis:7-alpine
+        ports:
+          - 6380:6379
     steps:
       - uses: actions/checkout@v3
 
@@ -22,3 +31,6 @@ jobs:
 
       - name: Run tests
         run: ./gradlew test --stacktrace --no-daemon
+        env:
+          SPRING_DATA_REDIS_CHAT_HOST: localhost
+          SPRING_DATA_REDIS_AUTH_HOST: localhost
