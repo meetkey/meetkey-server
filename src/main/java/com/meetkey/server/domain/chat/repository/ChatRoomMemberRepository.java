@@ -6,6 +6,7 @@ import com.meetkey.server.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,5 +45,14 @@ public interface ChatRoomMemberRepository extends JpaRepository<ChatRoomMember, 
         where crm.chatRoom.id = :chatRoomId
     """)
     List<Long> findMemberIdsByChatRoomId(Long chatRoomId);
+
+    @Query("""
+        select crm2.member.id
+        from ChatRoomMember crm1
+        join ChatRoomMember crm2 on crm1.chatRoom = crm2.chatRoom
+        where crm1.member = :member
+        and crm2.member != :member
+    """)
+    List<Long> findChattedMemberIds(Member member);
 
 }

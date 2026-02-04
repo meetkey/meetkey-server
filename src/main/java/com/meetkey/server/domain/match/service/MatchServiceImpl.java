@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.match.service;
 
+import com.meetkey.server.domain.chat.repository.ChatRoomMemberRepository;
 import com.meetkey.server.domain.match.dto.*;
 import com.meetkey.server.domain.match.entity.RecommendationQueue;
 import com.meetkey.server.domain.match.enums.MatchType;
@@ -41,6 +42,7 @@ public class MatchServiceImpl implements MatchService {
     private final MemberRepository memberRepository;
     private final PreferenceRepository preferenceRepository;
     private final RecommendationQueueRepository recommendationQueueRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
 
     @Transactional
     @Override
@@ -62,16 +64,34 @@ public class MatchServiceImpl implements MatchService {
         }
 
         // 2. 분기 처리: 일일 할당량 남음 vs 소진 (Recycle)
+        boolean forceRecycle = false;
         if (remainingQuota > 0) {
             // A. Daily Match Mode (새로울 후보 생성)
             // 할당량(remainingQuota)만큼만 생성
             List<RecommendationResDTO> newRecommendations = generateRecommendations(member, request, remainingQuota);
-            return buildResponse(newRecommendations, newRecommendations.size(), MatchType.DAILY_MATCH);
 
-        } else {
-            // B. Recycle Mode (할당량 소진 시)
+            if (!newRecommendations.isEmpty()) {
+                return buildResponse(newRecommendations, newRecommendations.size(), newRecommendations.size(), MatchType.DAILY_MATCH);
+            }
+
+            // 추천된 후보가 없을 때, 프리미엄 유저는 Recycle 모드로 전환
+            if (member.getMembership() == Membership.PREMIUM) {
+                forceRecycle = true;
+            } else {
+                return buildResponse(Collections.emptyList(), 0, 0, MatchType.DAILY_MATCH);
+            }
+        }
+
+        if (remainingQuota <= 0 || forceRecycle) {
+            // B. Recycle Mode (할당량 소진 시 또는 프리미엄 유저 후보 없음)
             // 재활용 대상: DISLIKE 했거나, LIKE 했지만 채팅 시작 안 한 유저
             List<Member> recycleMembers = memberLikeRepository.findRecycleMembers(member);
+
+            // 채팅방이 존재하는 유저 제외
+            List<Long> chattedMemberIds = chatRoomMemberRepository.findChattedMemberIds(member);
+            recycleMembers = recycleMembers.stream()
+                .filter(m -> !chattedMemberIds.contains(m.getId()))
+                .collect(Collectors.toList());
 
             // 랜덤으로 섞어서 반환 (또는 최신순 등)
             Collections.shuffle(recycleMembers);
@@ -96,16 +116,25 @@ public class MatchServiceImpl implements MatchService {
                 })
                 .collect(Collectors.toList());
 
-            return buildResponse(dtos, dtos.size(), MatchType.RECYCLE);
+            MatchType type = MatchType.RECYCLE;
+            int remaining = 0;
+            if (member.getMembership() == Membership.PREMIUM) {
+                type = MatchType.DAILY_MATCH;
+                remaining = 10;
+            }
+
+            return buildResponse(dtos, remaining, dtos.size(), type);
         }
+
+        return buildResponse(Collections.emptyList(), 0, 0, MatchType.DAILY_MATCH);
     }
 
-    private MatchListResDTO buildResponse(List<RecommendationResDTO> list, int remaining, MatchType type) {
+    private MatchListResDTO buildResponse(List<RecommendationResDTO> list, int remaining, int total, MatchType type) {
         return MatchListResDTO.builder()
             .recommendations(list)
             .swipeInfo(MatchListResDTO.SwipeInfoDTO.builder()
                 .remainingCount(remaining)
-                .totalCount(10)
+                .totalCount(total)
                 .build())
             .matchType(type)
             .build();
@@ -114,6 +143,8 @@ public class MatchServiceImpl implements MatchService {
     private List<RecommendationResDTO> generateRecommendations(Member member, RecommendationReqDTO request, int limit) {
         // 1. 기 스와이프 유저 제외
         List<Long> excludedIds = memberLikeRepository.findSwipedMemberIdsByMember(member);
+        // 1.1 이미 채팅한 유저 제외
+        excludedIds.addAll(chatRoomMemberRepository.findChattedMemberIds(member));
 
         // 1.5. 위치 정보 보정 (요청에 좌표 없고 DB에 있으면 DB 값 사용)
         MemberLocation myLocation = memberLocationRepository.findByMember(member).orElse(null);
