@@ -7,11 +7,12 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 
 @RequiredArgsConstructor
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, Principal {
     private final String memberId;
     private final String role;
 
@@ -21,6 +22,11 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(Member member){
         this.memberId = member.getId().toString();
         this.role = member.getRole().toString();
+    }
+
+    @Override
+    public String getName() {
+        return memberId;
     }
 
     @Override

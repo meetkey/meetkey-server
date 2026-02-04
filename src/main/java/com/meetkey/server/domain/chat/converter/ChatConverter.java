@@ -4,6 +4,7 @@ import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
 import com.meetkey.server.domain.chat.entity.ChatMessage;
 import com.meetkey.server.domain.chat.entity.ChatRoom;
 import com.meetkey.server.domain.chat.entity.ChatRoomMember;
+import com.meetkey.server.domain.chat.entity.enums.ChatRoomType;
 import com.meetkey.server.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class ChatConverter {
     public static ChatRoom toChatRoom(String directKey){
         return ChatRoom.builder()
                 .directKey(directKey)
+                .type(ChatRoomType.DIRECT)
                 .build();
     }
 

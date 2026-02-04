@@ -5,14 +5,16 @@ import com.meetkey.server.domain.chat.dto.request.ChatReqDTO;
 import com.meetkey.server.domain.chat.dto.response.ChatResDTO;
 import com.meetkey.server.domain.chat.entity.ChatRoom;
 import com.meetkey.server.domain.chat.entity.ChatRoomMember;
+import com.meetkey.server.domain.chat.exception.ChatErrorStatus;
 import com.meetkey.server.domain.chat.repository.ChatMessageRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomMemberRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomRepository;
 import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.exception.MemberErrorStatus;
+import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberRepository;
-import com.meetkey.server.global.apiPayload.exception.ChatException;
+import com.meetkey.server.domain.chat.exception.ChatException;
 import com.meetkey.server.global.apiPayload.exception.GeneralException;
-import com.meetkey.server.global.apiPayload.status.ChatErrorCode;
 import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,9 +35,9 @@ public class ChatCommandService {
     // 채팅방 생성
     public ChatResDTO.CreateChatRoomRes createChatRoom(ChatReqDTO.CreateChatRoomReq req, Long memberId){
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
-        Member targetMember = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+        Member targetMember = memberRepository.findById(req.targetUserId())
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
 
         String directKey = makeDirectKey(memberId, req.targetUserId());
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByDirectKey(directKey);
@@ -61,9 +63,9 @@ public class ChatCommandService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
         ChatRoomMember byMemberAndChatRoom = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
         chatRoomMemberRepository.delete(byMemberAndChatRoom);
     }
 
@@ -72,9 +74,9 @@ public class ChatCommandService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(CommonErrorStatus._INTERNAL_SERVER_ERROR));
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_NOT_FOUND));
         ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByMemberAndChatRoom(member, chatRoom)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new ChatException(ChatErrorStatus.CHAT_ROOM_MEMBER_NOT_FOUND));
 
         chatMessageRepository.findTop1ByChatRoomOrderByIdDesc(chatRoom)
                 .ifPresent(chatRoomMember::updateLastReadMsg);

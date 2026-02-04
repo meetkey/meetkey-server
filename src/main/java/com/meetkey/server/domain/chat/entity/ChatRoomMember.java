@@ -9,25 +9,30 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Builder
-@Table(name = "chat_room_member")
+@Table(
+        name = "chat_room_member",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"chat_room_id", "member_id"})
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class ChatRoomMember extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @JoinColumn(name = "member_id", nullable = false)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
     @JoinColumn(name = "chat_room_id", nullable = false)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ChatRoom chatRoom;
 
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_read_msg_id")
-    @ManyToOne
     private ChatMessage lastReadMsg;
 
     private LocalDateTime joinedAt;

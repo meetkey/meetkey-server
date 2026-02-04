@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.chat.entity;
 
+import com.meetkey.server.domain.chat.entity.enums.ChatRoomType;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,8 +16,9 @@ public class ChatRoom extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String type; // 방 유형 -> enum 으로 변경
+    private ChatRoomType type;
 
     @Column(nullable = false)
     private String directKey;
