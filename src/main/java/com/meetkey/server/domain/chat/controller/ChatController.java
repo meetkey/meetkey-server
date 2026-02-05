@@ -8,12 +8,19 @@ import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
 import com.meetkey.server.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static com.meetkey.server.domain.chat.dto.request.ChatReqDTO.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +34,7 @@ public class ChatController {
     @Operation(summary = "채팅방 생성 API", description = "새로운 채팅방을 생성합니다. 상대방 ID 등을 전달받아 방을 개설합니다.")
     @PostMapping
     public BasicResponse<ChatResDTO.CreateChatRoomRes> createChatRoom(
-            @RequestBody ChatReqDTO.CreateChatRoomReq req
+            @RequestBody CreateChatRoomReq req
             ,@AuthenticationPrincipal CustomUserDetails details
     ){
         ChatResDTO.CreateChatRoomRes chatRoom = chatCommandService.createChatRoom(req, details.getMemberId());
@@ -72,5 +79,21 @@ public class ChatController {
     ) {
         chatCommandService.readMessages(details.getMemberId(), chatRoomId);
         return BasicResponse.success(CommonSuccessStatus._OK, null);
+    }
+
+    @Operation(summary = "채팅방 알림 설정 변경 API", description = "특정 채팅방의 알림 설정을 켜거나 끕니다. (true : 켜기, false : 끄기)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "400", description = "MEMBER4041: 사용자를 찾을 수 없음, CHAT2041 : 채팅방을 찾을 수 없음, CHAT2043 : 채팅방 멤버를 찾을 수 없음")
+    })
+    @PatchMapping("/{chatRoomId}/alarm")
+    public BasicResponse<String> updateChatAlarm(
+            @Parameter(description = "채팅방 ID", example = "1") @PathVariable Long chatRoomId,
+            @RequestBody ChatAlarmReq request,
+            @AuthenticationPrincipal CustomUserDetails details
+    ) {
+        chatCommandService.toggleAlarm(details.getMemberId(), chatRoomId, request.isAlarm());
+        String message = request.isAlarm() ? "채팅 알림이 켜졌습니다." : "채팅 알림이 꺼졌습니다.";
+        return BasicResponse.success(CommonSuccessStatus._OK, message);
     }
 }
