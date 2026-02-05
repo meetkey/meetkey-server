@@ -25,5 +25,12 @@ jobs:
       - name: Grant permission for gradlew
         run: chmod +x gradlew
 
+      - name: Create dummy FCM file for test
+        run: |
+          mkdir -p src/main/resources/firebase
+          echo '{"type": "service_account", "project_id": "test"}' > src/main/resources/firebase/test.json
+
       - name: Run tests
+        env:
+          FCM_KEY_PATH: firebase/test.json
         run: ./gradlew test --stacktrace --no-daemon
