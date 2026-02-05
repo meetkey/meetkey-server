@@ -1,8 +1,12 @@
 package com.meetkey.server.domain.member.controller;
 
+import com.meetkey.server.domain.member.dto.ProfileReqDTO;
+import com.meetkey.server.domain.member.dto.ProfileResDTO;
+import com.meetkey.server.domain.member.entity.mapping.MemberPhoto;
 import com.meetkey.server.domain.member.service.ProfileService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
+import com.meetkey.server.global.s3.S3Service;
 import com.meetkey.server.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.meetkey.server.domain.member.dto.ProfileReqDTO.*;
 import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 
@@ -26,6 +33,7 @@ import static com.meetkey.server.domain.member.dto.ProfileResDTO.*;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final S3Service s3Service;
 
     @Operation(summary = "프로필 정보 수정 API", description = "사용자의 활동 지역(문자열), 한줄 소개, 언어 정보를 변경합니다.")
     @ApiResponses(value = {
@@ -189,6 +197,44 @@ public class ProfileController {
         return ResponseEntity
                 .ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, "평가가 반영되었습니다."));
+    }
+
+    @Operation(summary = "업로드용 Presigned Url 발급 API", description = "프론트에서 파일 업로드 전에 요청")
+    @PostMapping("/photos")
+    public BasicResponse<List<ProfileResDTO.MemberPhotoUrl>> getMemberPhotoUploadUrl(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody List<ProfileReqDTO.PhotoInfo> photoInfos
+            ){
+        Long memberId = customUserDetails.getMemberId();
+
+        List<ProfileResDTO.MemberPhotoUrl> responses = photoInfos.stream()
+                .map(info -> s3Service.generateMemberPhotoPresignedUrl(memberId, info.fileName(), info.contentType()))
+                .collect(Collectors.toList());
+
+        return BasicResponse.success(CommonSuccessStatus._OK, responses);
+    }
+
+    @PostMapping("/photos/register")
+    public BasicResponse<Void> registerMemberPhotos(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody List<String> s3Keys // 프론트가 업로드 성공 후 보낸 key 리스트
+    ) {
+        // 2. 새로운 s3Keys들을 MemberPhoto 엔티티로 만들어 저장
+        Long memberId = customUserDetails.getMemberId();
+        s3Service.registerMemberPhotoKeys(memberId, s3Keys);
+
+        return BasicResponse.success(CommonSuccessStatus._OK, null);
+    }
+
+    @Operation(summary = "내 프로필 사진 조회 API", description = "로그인한 사용자의 프로필 사진 URL 리스트를 가져옵니다.")
+    @GetMapping("/photos")
+    public BasicResponse<List<String>> getMyPhotos(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        Long memberId = customUserDetails.getMemberId();
+        List<String> photoUrls = s3Service.getMemberPhotoUrls(memberId);
+
+        return BasicResponse.success(CommonSuccessStatus._OK, photoUrls);
     }
 }
 

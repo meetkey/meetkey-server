@@ -77,4 +77,9 @@ public class ProfileReqDTO {
             @Schema(description = "경도", example = "126.9410")
             Double longitude
     ) {}
+
+    public record PhotoInfo(
+            String fileName,
+            String contentType
+    ){}
 }

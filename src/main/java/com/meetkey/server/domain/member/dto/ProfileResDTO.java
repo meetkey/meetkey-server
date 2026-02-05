@@ -116,4 +116,10 @@ public class ProfileResDTO {
             String bio
     ) {}
 
+    @Builder
+    public record MemberPhotoUrl(
+            String url,
+            String key
+    ){}
+
 }
