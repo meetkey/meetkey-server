@@ -14,7 +14,7 @@ public class RedisSubscriberConfig {
     private final ChatRedisSubscriber chatRedisSubscriber;
 
     public RedisSubscriberConfig(
-            @Qualifier("chatRedisConnectionFactory") RedisConnectionFactory connectionFactory,
+            RedisConnectionFactory connectionFactory,
             ChatRedisSubscriber chatRedisSubscriber) {
         this.connectionFactory = connectionFactory;
         this.chatRedisSubscriber = chatRedisSubscriber;

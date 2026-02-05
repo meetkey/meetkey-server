@@ -6,6 +6,7 @@ services:
       - "80:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      FCM_KEY_PATH: ${FCM_KEY_PATH}
       S3_BUCKET: ${S3_BUCKET}
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
@@ -14,29 +15,21 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ADMIN_SECRET: ${ADMIN_SECRET}
       KAKAO_APP_KEY: ${KAKAO_APP_KEY}
-
       COOLSMS_API_KEY: ${COOLSMS_API_KEY}
       COOLSMS_API_SECRET: ${COOLSMS_API_SECRET}
       COOLSMS_SENDER: ${COOLSMS_SENDER}
+    volumes:
+      - /home/ec2-user/app/firebase:/app/firebase:ro
     depends_on:
-      - redis-chat
-      - redis-auth
+      - redis
     networks:
       - spring-boot-app-network
 
-  redis-chat:
+  redis:
     image: redis:7-alpine
-    container_name: redis-chat
+    container_name: redis
     ports:
       - "6379:6379"
-    networks:
-      - spring-boot-app-network
-
-  redis-auth:
-    image: redis:7-alpine
-    container_name: redis-auth
-    ports:
-      - "6380:6379"
     networks:
       - spring-boot-app-network
 

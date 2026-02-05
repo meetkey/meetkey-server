@@ -5,12 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -27,15 +25,11 @@ import java.time.Duration;
 @Configuration
 @EnableCaching
 public class RedisConfig {
-    @Value("${spring.data.redis.chat.host}")
-    private String chatHost;
-    @Value("${spring.data.redis.auth.host}")
-    private String authHost;
+    @Value("${spring.data.redis.host}")
+    private String host;
 
-    @Value("${spring.data.redis.chat.port:6379}")
-    private int chatPort;
-    @Value("${spring.data.redis.auth.port:6379}")
-    private int authPort;
+    @Value("${spring.data.redis.port}")
+    private int port;
 
     @Bean
     public ObjectMapper redisObjectMapper() {
@@ -45,25 +39,11 @@ public class RedisConfig {
         return mapper;
     }
 
-    // 채팅용 (port: 6379)
     @Bean
-    @Primary
-    public RedisConnectionFactory chatRedisConnectionFactory() {
+    public RedisConnectionFactory RedisConnectionFactory(){
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(chatHost);
-        config.setPort(chatPort);
-
-        LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
-        factory.afterPropertiesSet();
-        return factory;
-    }
-
-    // SMS/Refresh토큰용 Redis
-    @Bean
-    public RedisConnectionFactory authRedisConnectionFactory(){
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(authHost);
-        config.setPort(authPort);
+        config.setHostName(host);
+        config.setPort(port);
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
         factory.afterPropertiesSet();
@@ -72,7 +52,7 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
-            @Qualifier("chatRedisConnectionFactory") RedisConnectionFactory connectionFactory,
+            RedisConnectionFactory connectionFactory,
             ObjectMapper redisObjectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -90,7 +70,7 @@ public class RedisConfig {
     // SMS, RefreshToken용
     @Bean
     public StringRedisTemplate stringRedisTemplate(
-            @Qualifier("authRedisConnectionFactory") RedisConnectionFactory connectionFactory) {
+            RedisConnectionFactory connectionFactory) {
         StringRedisTemplate template = new StringRedisTemplate();
         template.setConnectionFactory(connectionFactory);
         return template;
@@ -99,7 +79,7 @@ public class RedisConfig {
     // OIDC 공개용 키 저장
     @Bean
     public RedisCacheManager oidcCacheManager(
-            @Qualifier("authRedisConnectionFactory")  RedisConnectionFactory connectionFactory
+            RedisConnectionFactory connectionFactory
     ){
         ObjectMapper cacheMapper = new ObjectMapper();
         RecordSupportingTypeResolver typeResolver = new RecordSupportingTypeResolver(ObjectMapper.DefaultTyping.NON_FINAL, cacheMapper.getPolymorphicTypeValidator());
