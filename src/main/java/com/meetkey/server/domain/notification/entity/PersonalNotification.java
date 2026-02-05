@@ -18,7 +18,7 @@ public class PersonalNotification extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @Column(nullable = false)
@@ -44,4 +44,19 @@ public class PersonalNotification extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private ChatMessage chatMessage;
 
+    public void renewNotification(String newContent, ChatMessage newChatMessage) {
+        this.content = newContent;
+        this.chatMessage = newChatMessage;
+        this.isRead = false;
+    }
+
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void read() {
+        this.isRead = true;
+    }
+
 }
+

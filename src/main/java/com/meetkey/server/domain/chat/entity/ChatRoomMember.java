@@ -37,6 +37,9 @@ public class ChatRoomMember extends BaseEntity{
 
     private LocalDateTime joinedAt;
 
+    @Column(nullable = false)
+    private boolean isAlarm = true;
+
     public void updateLastReadMsg(ChatMessage lastReadMsg){
         if (this.lastReadMsg != null &&
                 this.lastReadMsg.getId() >= lastReadMsg.getId()) {
@@ -44,5 +47,9 @@ public class ChatRoomMember extends BaseEntity{
         }
 
         this.lastReadMsg = lastReadMsg;
+    }
+
+    public void toggleAlarm(boolean isAlarm) {
+        this.isAlarm = isAlarm;
     }
 }
