@@ -2,19 +2,16 @@ package com.meetkey.server.domain.auth.controller;
 
 import com.meetkey.server.domain.auth.service.AuthService;
 import com.meetkey.server.domain.auth.service.SmsService;
-import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.enums.Provider;
-import com.meetkey.server.domain.member.enums.Role;
-import com.meetkey.server.domain.member.repository.MemberRepository;
-import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonErrorStatus;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
 import com.meetkey.server.global.security.CustomUserDetails;
-import com.meetkey.server.global.security.jwt.JwtUtil;
 import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
 import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 
+import com.meetkey.server.global.security.oauth.dto.OidcDTO;
+import com.meetkey.server.global.security.oauth.kakao.KakaoOauthClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     private final SmsService smsService;
+    private final KakaoOauthClient kakaoOauthClient;
 
 
     @Value("${admin.secret}")
@@ -140,4 +138,11 @@ public class AuthController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, true));
     }
 
+    // OIDC Cache 설정 확인 테스트
+    @GetMapping("/test/kakao-keys")
+    public ResponseEntity<?> getKeys() {
+        OidcDTO.OIDCPublicKeys keys = kakaoOauthClient.getKakaoOIDCOpenKeys();
+
+        return ResponseEntity.ok(keys);
+    }
 }

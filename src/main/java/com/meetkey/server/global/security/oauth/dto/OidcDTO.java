@@ -17,7 +17,9 @@ public class OidcDTO {
     public record OIDCPublicKey (
         // JWK
         String kid,
+        String kty,
         String alg,
+        String use,
         String n,
         String e
     ){}

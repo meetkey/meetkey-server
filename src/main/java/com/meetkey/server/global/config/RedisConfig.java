@@ -1,17 +1,35 @@
 package com.meetkey.server.global.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.time.Duration;
+
 @Configuration
+@EnableCaching
 public class RedisConfig {
+    @Value("${spring.data.redis.host}")
+    private String host;
+
+    @Value("${spring.data.redis.port}")
+    private int port;
 
     @Bean
     public ObjectMapper redisObjectMapper() {
@@ -22,7 +40,20 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper redisObjectMapper) {
+    public RedisConnectionFactory RedisConnectionFactory(){
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+        config.setHostName(host);
+        config.setPort(port);
+
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
+        factory.afterPropertiesSet();
+        return factory;
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory connectionFactory,
+            ObjectMapper redisObjectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
@@ -35,6 +66,44 @@ public class RedisConfig {
 
         return template;
     }
+
+    // SMS, RefreshToken용
+    @Bean
+    public StringRedisTemplate stringRedisTemplate(
+            RedisConnectionFactory connectionFactory) {
+        StringRedisTemplate template = new StringRedisTemplate();
+        template.setConnectionFactory(connectionFactory);
+        return template;
+    }
+
+    // OIDC 공개용 키 저장
+    @Bean
+    public RedisCacheManager oidcCacheManager(
+            RedisConnectionFactory connectionFactory
+    ){
+        ObjectMapper cacheMapper = new ObjectMapper();
+        RecordSupportingTypeResolver typeResolver = new RecordSupportingTypeResolver(ObjectMapper.DefaultTyping.NON_FINAL, cacheMapper.getPolymorphicTypeValidator());
+        StdTypeResolverBuilder initializedResolver = typeResolver.init(JsonTypeInfo.Id.CLASS, null);
+        initializedResolver = initializedResolver.inclusion(JsonTypeInfo.As.PROPERTY);
+        cacheMapper.setDefaultTyping(initializedResolver);
+
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
+                )
+                .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper))
+                )
+                // 키 앞에 "jwk:" 접두사를 붙임
+                .computePrefixWith(cacheName -> "jwk:" + cacheName + "::")
+                .entryTtl(Duration.ofDays(3));
+
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(connectionFactory)
+                .cacheDefaults(config)
+                .build();
+    }
+
 }
 
 
