@@ -49,4 +49,4 @@ cloud:
 
 fcm:
   key:
-    path: "dummy-path""
+    path: "dummy-path"
