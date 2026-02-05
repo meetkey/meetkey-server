@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Configuration
-@Profile({"local", "prod"})
+@Profile("!test")
 public class FcmConfig {
 
     @Value("${fcm.key.path}")
