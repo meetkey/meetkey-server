@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,5 +52,14 @@ public interface ChatRoomMemberRepository extends JpaRepository<ChatRoomMember, 
 
     @Query("SELECT cm.member FROM ChatRoomMember cm WHERE cm.chatRoom.id = :roomId AND cm.member.id != :myId")
     Optional<Member> findPartner(@Param("roomId") Long roomId, @Param("myId") Long myId);
+
+    @Query("""
+        select crm2.member.id
+        from ChatRoomMember crm1
+        join ChatRoomMember crm2 on crm1.chatRoom = crm2.chatRoom
+        where crm1.member = :member
+        and crm2.member != :member
+    """)
+    List<Long> findChattedMemberIds(Member member);
 
 }
