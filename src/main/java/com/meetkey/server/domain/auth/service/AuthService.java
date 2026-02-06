@@ -35,7 +35,7 @@ public class AuthService {
     @Value(("{apple.app-key}"))
     private String appleAppKey;
 
-    private final KakaoOauthClient kakaoClient;
+    private final KakaoOauthClient kakaoOauthClient;
     private final AppleOauthClient appleClient;
 
     private final OauthOidcHelper oAuthOIDCHelper;
@@ -173,7 +173,7 @@ public class AuthService {
     }
 
     private String getKakaoProviderIdFromIdToken(String idToken){
-        OidcDTO.OIDCPublicKeys response = kakaoClient.getKakaoOIDCOpenKeys();
+        OidcDTO.OIDCPublicKeys response = kakaoOauthClient.getKakaoOIDCOpenKeys();
         OidcDTO.OIDCDecodePayload payload = oAuthOIDCHelper.getPayloadFromIdToken(
                 idToken,
                 "https://kauth.kakao.com",

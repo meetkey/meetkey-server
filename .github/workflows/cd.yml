@@ -63,5 +63,10 @@ jobs:
             export COOLSMS_API_SECRET=${{ secrets.COOLSMS_API_SECRET }}
             export COOLSMS_SENDER=${{ secrets.COOLSMS_SENDER }}
             
+            export FCM_KEY_PATH=/app/firebase/${{ secrets.FCM_FILE_NAME }}
+            
+            # Spring Boot 앱만 pull
             docker compose -f docker-compose.yml pull spring-boot-app
-            docker compose -f docker-compose.yml up -d --no-deps spring-boot-app
+      
+            # 전체 재시작 (Redis는 변경 없으면 그대로 유지됨)
+            docker compose -f docker-compose.yml up -d

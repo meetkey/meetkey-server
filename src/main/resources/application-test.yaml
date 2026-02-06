@@ -1,4 +1,8 @@
 spring:
+  spring:
+    config:
+      activate:
+        on-profile: test
   data:
     redis:
       host: localhost
@@ -29,7 +33,7 @@ coolsms:
   sender: ${COOLSMS_SENDER:}
 
 admin:
-  secret: ${ADMIN_SECRET:1234}
+  secret: ${ADMIN_SECRET:}
 
 kakao:
   app-key: ${KAKAO_APP_KEY:}
@@ -45,4 +49,4 @@ cloud:
 
 fcm:
   key:
-    path: ${FCM_PATH:}
+    path: "dummy-path"

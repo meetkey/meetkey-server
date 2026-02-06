@@ -32,3 +32,6 @@ build
 !**/src/test/**/build/
 
 /src/main/resources/application-secret.yml
+
+# firebase service account keys
+src/main/resources/firebase/*.json
