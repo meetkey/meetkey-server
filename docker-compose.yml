@@ -18,6 +18,7 @@ services:
       COOLSMS_API_KEY: ${COOLSMS_API_KEY}
       COOLSMS_API_SECRET: ${COOLSMS_API_SECRET}
       COOLSMS_SENDER: ${COOLSMS_SENDER}
+      KAKAO_MAP_API_KEY: ${KAKAO_MAP_API_KEY}
     volumes:
       - /home/ec2-user/app/firebase:/app/firebase:ro
     depends_on:

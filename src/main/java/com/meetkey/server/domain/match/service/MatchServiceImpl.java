@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.match.service;
 
+import com.meetkey.server.domain.badge.enums.BadgeLevel;
 import com.meetkey.server.domain.chat.repository.ChatRoomMemberRepository;
 import com.meetkey.server.domain.match.dto.*;
 import com.meetkey.server.domain.match.entity.RecommendationQueue;
@@ -43,6 +44,7 @@ public class MatchServiceImpl implements MatchService {
     private final PreferenceRepository preferenceRepository;
     private final RecommendationQueueRepository recommendationQueueRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final com.meetkey.server.domain.badge.respository.PointHistoryRepository pointHistoryRepository;
 
     @Transactional
     @Override
@@ -324,6 +326,11 @@ public class MatchServiceImpl implements MatchService {
     private RecommendationResDTO convertToDTO(Member member, Preference pref, double distance) {
         int age = member.getBirthday() != null ? LocalDate.now().getYear() - member.getBirthday().getYear() + 1 : 0;
 
+        int totalScore = pointHistoryRepository.calculateTotalScore(member);
+        String badgeLevel = BadgeLevel.fromScore(totalScore).name();
+
+        String location = member.getLocation();
+
         RecommendationResDTO.PersonalityDTO personalityDTO = null;
         if (pref != null) {
             personalityDTO = RecommendationResDTO.PersonalityDTO.builder()
@@ -359,6 +366,11 @@ public class MatchServiceImpl implements MatchService {
             .personality(personalityDTO)
             .photoUrls(Collections.emptyList()) // 플레이스홀더
             .introduction(member.getBio())
+            .badge(RecommendationResDTO.BadgeInfoDTO.builder()
+                .level(badgeLevel)
+                .score(totalScore)
+                .build())
+            .location(location)
             .build();
     }
 

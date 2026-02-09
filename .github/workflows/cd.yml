@@ -65,6 +65,8 @@ jobs:
             
             export FCM_KEY_PATH=/app/firebase/${{ secrets.FCM_FILE_NAME }}
             
+            export KAKAO_MAP_API_KEY='${{ secrets.KAKAO_MAP_API_KEY }}'
+            
             # Spring Boot 앱만 pull
             docker compose -f docker-compose.yml pull spring-boot-app
       

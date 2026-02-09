@@ -38,6 +38,7 @@ public class ProfileService {
     private final MemberLocationRepository memberLocationRepository;
     private final EvaluationRepository evaluationRepository;
     private final BadgeService badgeService;
+    private final GeocodingService geocodingService;
 
     public ProfileUpdateResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
@@ -53,6 +54,11 @@ public class ProfileService {
                 memberLocationRepository.save(newMemberLocation);
             } else {
                 memberLocation.update(request.latitude(), request.longitude());
+            }
+
+            String address = geocodingService.getAddress(request.latitude(), request.longitude());
+            if (address != null) {
+                member.updateProfileInfo(address, request.bio(), request.first(), request.target(), request.level());
             }
         }
 
@@ -72,6 +78,11 @@ public class ProfileService {
                 memberLocationRepository.save(newMemberLocation);
             } else {
                 memberLocation.update(request.latitude(), request.longitude());
+            }
+
+            String address = geocodingService.getAddress(request.latitude(), request.longitude());
+            if (address != null) {
+                member.updateProfileInfo(address, member.getBio(), member.getFirstLanguage(), member.getTargetLanguage(), member.getTargetLanguageLevel());
             }
         }
     }
