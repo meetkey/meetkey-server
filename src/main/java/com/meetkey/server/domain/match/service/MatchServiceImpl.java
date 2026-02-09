@@ -366,7 +366,10 @@ public class MatchServiceImpl implements MatchService {
             .personality(personalityDTO)
             .photoUrls(Collections.emptyList()) // 플레이스홀더
             .introduction(member.getBio())
-            .badgeLevel(badgeLevel)
+            .badge(RecommendationResDTO.BadgeInfoDTO.builder()
+                .level(badgeLevel)
+                .score(totalScore)
+                .build())
             .location(location)
             .build();
     }

@@ -19,7 +19,7 @@ public record RecommendationResDTO(
     PersonalityDTO personality,
     List<String> photoUrls,
     String introduction,
-    String badgeLevel,
+    BadgeInfoDTO badge,
     String location
 ) {
     @Builder
@@ -36,6 +36,13 @@ public record RecommendationResDTO(
         ChatType chatType,
         FriendType friendType,
         RelationType relationType
+    ) {
+    }
+
+    @Builder
+    public record BadgeInfoDTO(
+        String level,
+        int score
     ) {
     }
 }
