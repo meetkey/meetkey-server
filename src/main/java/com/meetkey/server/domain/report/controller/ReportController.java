@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.report.controller;
 
+import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.domain.report.dto.ReportReqDTO;
 import com.meetkey.server.domain.report.service.ReportService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/report")
 public class ReportController {
     private final ReportService reportService;
+    private final MemberService memberService;
 
     @PostMapping("/{targetId}")
     public ResponseEntity<BasicResponse<Void>> createReport(
@@ -23,6 +25,8 @@ public class ReportController {
             @RequestBody ReportReqDTO.CreateReport req
     ) {
         reportService.createReport(reporter.getMemberId(), targetId, req);
+        memberService.blockMember(reporter.getMemberId(), targetId);
+
         return ResponseEntity.ok()
                 .body(BasicResponse.success(CommonSuccessStatus._OK, null));
     }
