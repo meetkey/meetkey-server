@@ -3,15 +3,13 @@ package com.meetkey.server.domain.member.entity.mapping;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 @Table(name = "member_block")
 public class MemberBlock extends BaseEntity {
     @EmbeddedId

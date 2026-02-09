@@ -2,13 +2,17 @@ package com.meetkey.server.domain.member.service;
 
 
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
+import com.meetkey.server.domain.member.dto.MemberResDTO;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.SocialLogin;
 import com.meetkey.server.domain.member.entity.mapping.FcmToken;
+import com.meetkey.server.domain.member.entity.mapping.FromToId;
+import com.meetkey.server.domain.member.entity.mapping.MemberBlock;
 import com.meetkey.server.domain.member.enums.Provider;
 import com.meetkey.server.domain.member.enums.Role;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
+import com.meetkey.server.domain.member.repository.MemberBlockRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.repository.SocialLoginRepository;
 import com.meetkey.server.domain.notification.repository.FcmTokenRepository;
@@ -22,6 +26,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final SocialLoginRepository socialLoginRepository;
     private final FcmTokenRepository fcmTokenRepository;
+    private final MemberBlockRepository memberBlockRepository;
 
     @Transactional
     public Member signup(Provider provider, String providerId, MemberReqDTO.Signup req) {
@@ -72,6 +77,33 @@ public class MemberService {
         socialLoginRepository.save(socialMember);
 
         return member;
+    }
+    @Transactional
+    public MemberResDTO.Block blockMember(Long fromId, Long toId){
+        // 멤버 있는지 없는지 확인
+        Member fromMember = memberRepository.findById(fromId)
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+        Member toMember = memberRepository.findById(toId)
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+        FromToId blockId = new FromToId(fromId, toId);
+
+        // 중복 차단인지 확인
+        if (memberBlockRepository.existsById(blockId)) {
+            throw new MemberException(MemberErrorStatus.ALREADY_BLOCKED);
+        }
+
+        MemberBlock memberBlock = MemberBlock.builder()
+                .memberBlockId(blockId)
+                .fromMember(fromMember)
+                .toMember(toMember)
+                .build();
+
+        memberBlockRepository.save(memberBlock);
+
+        return MemberResDTO.Block.builder()
+                .fromMemberId(fromId)
+                .toMemberId(toId)
+                .build();
     }
 
     // FCM 토큰 저장

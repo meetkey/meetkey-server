@@ -17,7 +17,8 @@ public enum MemberErrorStatus implements BaseCode {
 
     // 회원 관련
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER4041", "해당 사용자를 찾을 수 없습니다."),
-    INVALID_S3_KEY(HttpStatus.NOT_FOUND, "MEMBER4042", "저장된 프로필 사진을 찾을 수 없습니다.");
+    INVALID_S3_KEY(HttpStatus.NOT_FOUND, "MEMBER4042", "저장된 프로필 사진을 찾을 수 없습니다."),
+    ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "MEMBER_4001", "이미 차단된 사용자입니다.")
     ;
 
     private final HttpStatus status;

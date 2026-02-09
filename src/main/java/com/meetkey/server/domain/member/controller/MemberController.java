@@ -1,7 +1,14 @@
 package com.meetkey.server.domain.member.controller;
 
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
+import com.meetkey.server.domain.member.dto.MemberResDTO;
 import com.meetkey.server.domain.member.dto.ProfileResDTO;
+import com.meetkey.server.domain.member.entity.Member;
+import com.meetkey.server.domain.member.entity.mapping.MemberBlock;
+import com.meetkey.server.domain.member.exception.MemberErrorStatus;
+import com.meetkey.server.domain.member.exception.MemberException;
+import com.meetkey.server.domain.member.repository.MemberBlockRepository;
+import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
@@ -14,10 +21,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.meetkey.server.domain.member.dto.MemberReqDTO.*;
 
@@ -27,6 +33,8 @@ import static com.meetkey.server.domain.member.dto.MemberReqDTO.*;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberRepository memberRepository;
+    private final MemberBlockRepository memberBlockRepository;
 
     @Operation(summary = "FCM 토큰 저장 API", description = "사용자의 FCM 토큰을 저장합니다. (앱이 켜지거나 로그인시에 호출)")
     @ApiResponses(value = {
@@ -40,5 +48,14 @@ public class MemberController {
     ) {
         memberService.saveFcmToken(userDetails.getMemberId(), request.token());
         return ResponseEntity.ok(BasicResponse.success(CommonSuccessStatus._OK, "토큰 저장 완료"));
+    }
+
+    @PostMapping("/block/{memberId}")
+    public ResponseEntity<BasicResponse<MemberResDTO.Block>> blockMember(
+            @AuthenticationPrincipal CustomUserDetails fromMember,
+            @PathVariable("memberId") Long toMemberId
+    ){
+        MemberResDTO.Block res = memberService.blockMember(fromMember.getMemberId(), toMemberId);
+        return ResponseEntity.ok(BasicResponse.success(CommonSuccessStatus._OK, res));
     }
 }
