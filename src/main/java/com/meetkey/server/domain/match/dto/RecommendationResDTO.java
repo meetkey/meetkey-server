@@ -18,7 +18,9 @@ public record RecommendationResDTO(
     List<String> interests,
     PersonalityDTO personality,
     List<String> photoUrls,
-    String introduction
+    String introduction,
+    String badgeLevel,
+    String location
 ) {
     @Builder
     public record LanguageDTO(
