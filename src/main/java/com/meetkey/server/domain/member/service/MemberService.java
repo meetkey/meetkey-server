@@ -78,13 +78,12 @@ public class MemberService {
 
         return member;
     }
+
     @Transactional
     public MemberResDTO.Block blockMember(Long fromId, Long toId){
         // 멤버 있는지 없는지 확인
-        Member fromMember = memberRepository.findById(fromId)
-                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
-        Member toMember = memberRepository.findById(toId)
-                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
+        Member fromMember = findMemberById(fromId);
+        Member toMember = findMemberById(toId);
         FromToId blockId = new FromToId(fromId, toId);
 
         // 중복 차단인지 확인
@@ -106,6 +105,13 @@ public class MemberService {
                 .build();
     }
 
+    @Transactional
+    public void updateMembershipStatus(Long memberId){
+        Member member = findMemberById(memberId);
+
+        member.updateMemberShip();
+    }
+
     // FCM 토큰 저장
     @Transactional
     public void saveFcmToken(Long memberId, String token) {
@@ -119,6 +125,10 @@ public class MemberService {
                     .token(token)
                     .build());
         }
+    }
 
+    public Member findMemberById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
     }
 }

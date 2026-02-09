@@ -99,6 +99,15 @@ public class Member extends BaseEntity {
         return LocalDate.now().getYear() - this.birthday.getYear() + 1;
     }
 
+    public void updateMemberShip() {
+        if (this.membership == Membership.FREE) {
+            this.membership = Membership.PREMIUM;
+        }
+        else {
+            this.membership = Membership.FREE;
+        }
+    }
+
     public void increaseRecommend() {
         this.recommendCount++;
     }

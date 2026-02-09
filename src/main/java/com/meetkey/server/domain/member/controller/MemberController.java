@@ -1,12 +1,6 @@
 package com.meetkey.server.domain.member.controller;
 
-import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.dto.MemberResDTO;
-import com.meetkey.server.domain.member.dto.ProfileResDTO;
-import com.meetkey.server.domain.member.entity.Member;
-import com.meetkey.server.domain.member.entity.mapping.MemberBlock;
-import com.meetkey.server.domain.member.exception.MemberErrorStatus;
-import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberBlockRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.service.MemberService;
@@ -22,8 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 import static com.meetkey.server.domain.member.dto.MemberReqDTO.*;
 
@@ -57,5 +49,13 @@ public class MemberController {
     ){
         MemberResDTO.Block res = memberService.blockMember(fromMember.getMemberId(), toMemberId);
         return ResponseEntity.ok(BasicResponse.success(CommonSuccessStatus._OK, res));
+    }
+
+    @PatchMapping("/membership")
+    public ResponseEntity<BasicResponse<Void>> updateMembershipStatus(
+            @AuthenticationPrincipal CustomUserDetails details
+    ){
+        memberService.updateMembershipStatus(details.getMemberId());
+        return ResponseEntity.ok(BasicResponse.success(CommonSuccessStatus._OK, null));
     }
 }
