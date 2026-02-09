@@ -109,6 +109,10 @@ public class S3Service {
                 .collect(Collectors.toList());
 
         memberPhotoRepository.saveAll(photos);
+
+        if (!s3Keys.isEmpty()) {
+            member.updateProfilePhotoUrl(s3Keys.get(0));
+        }
     }
 
 

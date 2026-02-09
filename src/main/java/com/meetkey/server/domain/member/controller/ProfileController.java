@@ -214,6 +214,7 @@ public class ProfileController {
         return BasicResponse.success(CommonSuccessStatus._OK, responses);
     }
 
+    @Operation(summary = "프로필 key 저장 API", description = "앞선 요청으로 받은 프로필 key들을 DB에 저장합니다. ")
     @PostMapping("/photos/register")
     public BasicResponse<Void> registerMemberPhotos(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -226,7 +227,7 @@ public class ProfileController {
         return BasicResponse.success(CommonSuccessStatus._OK, null);
     }
 
-    @Operation(summary = "내 프로필 사진 조회 API", description = "로그인한 사용자의 프로필 사진 URL 리스트를 가져옵니다.")
+    @Operation(summary = "내 프로필 사진 전체 조회 API", description = "로그인한 사용자의 모든 프로필 사진 URL 리스트를 가져옵니다.")
     @GetMapping("/photos")
     public BasicResponse<List<String>> getMyPhotos(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
