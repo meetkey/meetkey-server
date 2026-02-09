@@ -1,6 +1,7 @@
 package com.meetkey.server.domain.member.entity;
 
 import com.meetkey.server.domain.member.entity.mapping.InterestMember;
+import com.meetkey.server.domain.member.entity.mapping.MemberPhoto;
 import com.meetkey.server.domain.member.enums.*;
 import com.meetkey.server.global.common.BaseEntity;
 import jakarta.persistence.*;
@@ -97,6 +98,10 @@ public class Member extends BaseEntity {
     public int getAge() {
         if (this.birthday == null) return 0;
         return LocalDate.now().getYear() - this.birthday.getYear() + 1;
+    }
+
+    public void updateProfilePhotoUrl(String profilePhotoUrl) {
+        this.profileImageUrl = profilePhotoUrl;
     }
 
     public void updateMemberShip() {

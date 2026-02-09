@@ -13,6 +13,7 @@ import com.meetkey.server.domain.member.enums.InterestType;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.*;
+import com.meetkey.server.global.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class ProfileService {
     private final EvaluationRepository evaluationRepository;
     private final BadgeService badgeService;
     private final GeocodingService geocodingService;
+    private final S3Service s3Service;
 
     public ProfileUpdateResponse updateProfile(Long memberId, ProfileUpdateRequest request) {
         Member member = getMember(memberId);
@@ -161,7 +163,9 @@ public class ProfileService {
             .map(InterestMember::getInterest)
             .toList();
 
-        return profileConverter.toProfileResponse(member, interests, preference, badge);
+        String profileImageUrl = s3Service.generateGetPresignedUrl(member.getProfileImageUrl());
+
+        return profileConverter.toProfileResponse(member, interests, preference, badge, profileImageUrl);
     }
 
     // 다른 사람 프로필 조회
@@ -185,7 +189,9 @@ public class ProfileService {
             .map(InterestMember::getInterest)
             .toList();
 
-        return profileConverter.toOtherProfileResponse(target, interests, preference, distance, badge);
+        String profileImageUrl = s3Service.generateGetPresignedUrl(target.getProfileImageUrl());
+
+        return profileConverter.toOtherProfileResponse(target, interests, preference, distance, badge, profileImageUrl);
     }
 
 

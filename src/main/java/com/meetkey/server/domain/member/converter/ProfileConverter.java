@@ -123,7 +123,8 @@ public class ProfileConverter {
             Member member,
             List<Interest> interests,
             Preference personality,
-            BadgeResponse badge
+            BadgeResponse badge,
+            String profileUrl
     ) {
         List<String> interestNames = interests.stream()
                 .map(interest -> interest.getType().name())
@@ -135,7 +136,7 @@ public class ProfileConverter {
                 .first(member.getFirstLanguage())
                 .target(member.getTargetLanguage())
                 .age(member.getAge())
-                .profileImage("image")
+                .profileImage(profileUrl)
                 .recommendCount(member.getRecommendCount())
                 .notRecommendCount(member.getNotRecommendCount())
                 .badge(badge)
@@ -151,7 +152,8 @@ public class ProfileConverter {
             List<Interest> interests,
             Preference personality,
             String distance,
-            BadgeResponse badge
+            BadgeResponse badge,
+            String profileUrl
     ) {
         List<String> interestNames = interests.stream()
                 .map(interest -> interest.getType().name())
@@ -163,7 +165,7 @@ public class ProfileConverter {
                 .age(member.getAge())
                 .gender(member.getGender())
                 .homeTown(member.getHomeTown())
-                .profileImage("image")
+                .profileImage(profileUrl)
                 .location(member.getLocation())
                 .distance(distance)
                 .recommendCount(member.getRecommendCount())
