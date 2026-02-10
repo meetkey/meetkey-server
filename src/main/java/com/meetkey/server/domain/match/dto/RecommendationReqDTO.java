@@ -4,6 +4,7 @@ import com.meetkey.server.domain.member.enums.HomeTown;
 import com.meetkey.server.domain.member.enums.InterestType;
 import com.meetkey.server.domain.member.enums.Language;
 import com.meetkey.server.domain.member.enums.Level;
+import com.meetkey.server.domain.member.enums.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -24,6 +25,9 @@ public record RecommendationReqDTO(
     List<Language> targetLanguage,
     @Schema(description = "학습 언어 레벨 필터", example = "[\"BEGINNER\"]")
     List<Level> targetLanguageLevel,
+
+    @Schema(description = "성향(Personality) 태그 리스트 (예: [\"EXTROVERT\", \"GROUP\"])", example = "[\"EXTROVERT\", \"GROUP\"]")
+    List<String> personalities,
 
     @Schema(description = "최소 나이 (18세 이상)", example = "20")
     @Min(value = 18, message = "최소 나이는 18세 이상이어야 합니다.")
