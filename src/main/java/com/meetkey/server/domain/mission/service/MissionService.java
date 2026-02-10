@@ -6,8 +6,10 @@ import com.meetkey.server.domain.badge.respository.BadgeRepository;
 import com.meetkey.server.domain.badge.respository.PointHistoryRepository;
 import com.meetkey.server.domain.badge.service.BadgeService;
 import com.meetkey.server.domain.chat.entity.ChatRoom;
+import com.meetkey.server.domain.chat.entity.enums.MessageType;
 import com.meetkey.server.domain.chat.exception.ChatErrorStatus;
 import com.meetkey.server.domain.chat.exception.ChatException;
+import com.meetkey.server.domain.chat.repository.ChatMessageRepository;
 import com.meetkey.server.domain.chat.repository.ChatRoomRepository;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
@@ -18,6 +20,7 @@ import com.meetkey.server.domain.mission.entity.Mission;
 import com.meetkey.server.domain.mission.entity.mapping.ChatRoomMission;
 import com.meetkey.server.domain.mission.entity.mapping.MissionLog;
 import com.meetkey.server.domain.mission.enums.MissionStatus;
+import com.meetkey.server.domain.mission.enums.MissionType;
 import com.meetkey.server.domain.mission.exception.MissionErrorStatus;
 import com.meetkey.server.domain.mission.exception.MissionException;
 import com.meetkey.server.domain.mission.respository.ChatRoomMissionRepository;
@@ -44,7 +47,7 @@ public class MissionService {
     private final ChatRoomMissionRepository chatRoomMissionRepository;
     private final MissionLogRepository missionLogRepository;
     private final MemberRepository memberRepository;
-    private final PointHistoryRepository pointHistoryRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
 
     private final MissionConverter missionConverter;
@@ -90,6 +93,27 @@ public class MissionService {
         if (log.getMissionStatus() == MissionStatus.SUCCESS) {
             throw new MissionException(MissionErrorStatus.ALREADY_CLEAR);
         }
+
+        MissionType missionType = chatRoomMission.getMission().getMissionType();
+        MessageType requiredMsgType;
+
+        if (missionType == MissionType.PHOTO) {
+            requiredMsgType = MessageType.IMAGE;
+        } else {
+            requiredMsgType = MessageType.TEXT;
+        }
+
+        boolean hasPerformed = chatMessageRepository.existsByChatRoomAndMemberAndCreatedAtAfterAndMessageType(
+                chatRoomMission.getChatRoom(),
+                member,
+                chatRoomMission.getAssignedAt(),
+                requiredMsgType
+        );
+
+        if (!hasPerformed) {
+            throw new MissionException(MissionErrorStatus.NOT_COMPLETED_YET);
+        }
+
 
         // 상태 변경 및 점수 지급
         log.complete();

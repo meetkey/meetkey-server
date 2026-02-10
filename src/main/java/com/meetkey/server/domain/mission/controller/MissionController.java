@@ -1,6 +1,5 @@
 package com.meetkey.server.domain.mission.controller;
 
-import com.meetkey.server.domain.mission.dto.MissionResDTO;
 import com.meetkey.server.domain.mission.service.MissionService;
 import com.meetkey.server.global.apiPayload.response.BasicResponse;
 import com.meetkey.server.global.apiPayload.status.CommonSuccessStatus;
@@ -13,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,11 +42,15 @@ public class MissionController {
 
     }
 
-    @Operation(summary = "미션 완료 인증", description = "미션을 수행하고 완료 버튼을 눌렀을 때 호출합니다.")
+    @Operation(summary = "미션 완료 인증", description = "사용자가 채팅을 보내면 호출 -> 내부 로직으로 미션 성공 여부를 판단" +
+            "미션 성공 로직 (내용은 신경쓰지 않음)" +
+            "1. 미션 타입이 PHOTO인 경우는 사진을 하나 이상 보내야한다. " +
+            "2. PHOTO가 아닌 다른 타입의 미션들은 텍스트 채팅을 한 번 이상 남겨야 한다." +
+            "3. 미션 받은 이후에 해당 내용을 수행해야함.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "요청 성공", content = @Content(schema = @Schema(implementation = Completion.class))),
-            @ApiResponse(responseCode = "400", description = "MEMBER4041 : 존재하지 않는 사용자입니다., MISSION4041 : 존재하지않는 미션입니다., MISSION4001 : 이미 완료된 미션입니다." +
-                    "MISSION4042 : 참여정보를 찾을 수 없습니다. , ")
+            @ApiResponse(responseCode = "400", description = "MEMBER4041 : 존재하지 않는 사용자입니다., MISSION4041 : 존재하지않는 미션입니다., MISSION4001 : 이미 완료된 미션입니다., " +
+                    "MISSION4002 : 아직 미션을 수행하지 않았습니다., MISSION4042 : 참여정보를 찾을 수 없습니다.")
     })
     @PostMapping("/{missionId}/complete")
     public BasicResponse<Completion> completeMission(
