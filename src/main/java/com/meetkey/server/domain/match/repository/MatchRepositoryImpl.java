@@ -4,9 +4,10 @@ import com.meetkey.server.domain.match.dto.RecommendationReqDTO;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.QInterest;
 import com.meetkey.server.domain.member.entity.QMember;
+import com.meetkey.server.domain.member.entity.QPreference;
 import com.meetkey.server.domain.member.entity.mapping.QInterestMember;
 import com.meetkey.server.domain.member.entity.mapping.QMemberLocation;
-import com.meetkey.server.domain.member.enums.Status;
+import com.meetkey.server.domain.member.enums.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -14,6 +15,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -75,6 +77,65 @@ public class MatchRepositoryImpl implements MatchRepositoryCustom {
 
             builder.and(qMemberLocation.isNotNull()); // 위치 정보가 있는 경우만
             builder.and(distanceExpression.loe(request.maxDistance()));
+        }
+
+        // 3. 성향 필터 (Preference Join)
+        // 3. 성향 필터 (Preference Join + Single List Parsing)
+        if (request.personalities() != null && !request.personalities().isEmpty()) {
+            QPreference qPreference = QPreference.preference;
+            query.leftJoin(qPreference).on(qPreference.member.eq(qMember));
+
+            List<String> personalities = request.personalities();
+
+            // Enum 별 분류 리스트
+            List<SocialType> socialTypes = new ArrayList<>();
+            List<MeetingType> meetingTypes = new ArrayList<>();
+            List<ChatType> chatTypes = new ArrayList<>();
+            List<FriendType> friendTypes = new ArrayList<>();
+            List<RelationType> relationTypes = new ArrayList<>();
+
+            for (String p : personalities) {
+                // Ignore "ANY" or duplicates in logic if handled by isValidEnum
+                try {
+                    socialTypes.add(SocialType.valueOf(p));
+                    continue;
+                } catch (IllegalArgumentException e) {
+                }
+
+                try {
+                    // MeetingType.ANY 무시 or 로직에 따라 포함 (여기선 무시)
+                    MeetingType mt = MeetingType.valueOf(p);
+                    if (mt != MeetingType.ANY) meetingTypes.add(mt);
+                    continue;
+                } catch (IllegalArgumentException e) {
+                }
+
+                try {
+                    chatTypes.add(ChatType.valueOf(p));
+                    continue;
+                } catch (IllegalArgumentException e) {
+                }
+
+                try {
+                    // FriendType.ANY 무시
+                    FriendType ft = FriendType.valueOf(p);
+                    if (ft != FriendType.ANY) friendTypes.add(ft);
+                    continue;
+                } catch (IllegalArgumentException e) {
+                }
+
+                try {
+                    relationTypes.add(RelationType.valueOf(p));
+                    continue;
+                } catch (IllegalArgumentException e) {
+                }
+            }
+
+            if (!socialTypes.isEmpty()) builder.and(qPreference.socialType.in(socialTypes));
+            if (!meetingTypes.isEmpty()) builder.and(qPreference.meetingType.in(meetingTypes));
+            if (!chatTypes.isEmpty()) builder.and(qPreference.chatType.in(chatTypes));
+            if (!friendTypes.isEmpty()) builder.and(qPreference.friendType.in(friendTypes));
+            if (!relationTypes.isEmpty()) builder.and(qPreference.relationType.in(relationTypes));
         }
 
         return query.where(builder)
