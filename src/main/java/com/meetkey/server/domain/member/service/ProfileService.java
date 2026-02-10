@@ -38,6 +38,7 @@ public class ProfileService {
     private final PreferenceRepository preferenceRepository;
     private final MemberLocationRepository memberLocationRepository;
     private final EvaluationRepository evaluationRepository;
+    private final MemberBlockRepository memberBlockRepository;
     private final BadgeService badgeService;
     private final GeocodingService geocodingService;
     private final S3Service s3Service;
@@ -173,6 +174,16 @@ public class ProfileService {
     public OtherProfileResponse getOtherProfile(Long memberId, Long targetMemberId) {
         Member me = getMember(memberId);
         Member target = getMember(targetMemberId);
+
+        // 내가 차단한 상태인지 확인
+        boolean iBlockedTarget = memberBlockRepository.existsByMemberBlockIdFromIdAndMemberBlockIdToId(memberId, targetMemberId);
+
+        // 상대가 나를 차단했는지 확인
+        boolean targetBlockedMe = memberBlockRepository.existsByMemberBlockIdFromIdAndMemberBlockIdToId(targetMemberId, memberId);
+
+        if (iBlockedTarget || targetBlockedMe) {
+            throw new MemberException(MemberErrorStatus.BLOCKED_MEMBER);
+        }
 
         MemberLocation myLocation = memberLocationRepository.findByMember(me).orElse(null);
         MemberLocation targetLocation = memberLocationRepository.findByMember(target).orElse(null);
