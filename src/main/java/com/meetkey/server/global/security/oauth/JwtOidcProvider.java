@@ -4,6 +4,7 @@ import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
 import com.meetkey.server.domain.auth.exception.AuthException;
 import com.meetkey.server.global.security.oauth.dto.OidcDTO;
 import io.jsonwebtoken.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -13,36 +14,29 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
+import java.util.Map;
 
+@Slf4j
 @Component
 public class JwtOidcProvider {
     private final String KID = "kid";
 
-    public String getKidFromIdTokenHeader(String token, String iss, String aud){
-        return (String) getIdTokenClaims(token, iss, aud).getHeader().get(KID);
-    }
+    public String getKidFromIdTokenHeader(String token, String iss, String aud) {
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            throw new AuthException(AuthErrorStatus.INVALID_TOKEN);
+        }
 
-    private Jwt<Header, Claims> getIdTokenClaims(String token, String iss, String aud){
         try {
-            return Jwts.parser()
-                    .requireAudience(aud) // aud 검증 (app id)
-                    .requireIssuer(iss) // iss 검증 (카카오)
-                    .build()
-                    .parseUnsecuredClaims(removeSigFromIdToken(token));
-        } catch (Exception e){
+            String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]));
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            Map<String, Object> header = mapper.readValue(headerJson, Map.class);
+            return (String) header.get(KID);
+        } catch (Exception e) {
+            log.error(e.getMessage());
             throw new AuthException(AuthErrorStatus.INVALID_TOKEN);
         }
     }
-
-    /*
-     * idToken의 서명 제거 메서드
-     */
-    private String removeSigFromIdToken(String token){
-        String[] splitToken = token.split("\\.");
-        if (splitToken.length != 3) throw new AuthException(AuthErrorStatus.INVALID_TOKEN);
-        return splitToken[0] + "." + splitToken[1] + "."; // Header, Payload 추출
-    }
-
     /*
      * 공개키로 서명 검증해서 iss, aud, sub 을 return.
      * n: 공개키 모듈
@@ -64,6 +58,7 @@ public class JwtOidcProvider {
                     .build()
                     .parseSignedClaims(token);
         } catch (Exception ex){
+            log.error(ex.getMessage());
             throw new AuthException(AuthErrorStatus.INVALID_TOKEN);
         }
     }
