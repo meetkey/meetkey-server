@@ -1,8 +1,10 @@
 package com.meetkey.server.domain.badge.service;
 
 import com.meetkey.server.domain.badge.converter.BadgeConverter;
+import com.meetkey.server.domain.badge.entity.Badge;
 import com.meetkey.server.domain.badge.entity.PointHistory;
 import com.meetkey.server.domain.badge.enums.ReasonType;
+import com.meetkey.server.domain.badge.respository.BadgeRepository;
 import com.meetkey.server.domain.badge.respository.PointHistoryRepository;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
@@ -23,6 +25,7 @@ public class BadgeService {
 
     private final MemberRepository memberRepository;
     private final PointHistoryRepository pointHistoryRepository;
+    private final BadgeRepository badgeRepository;
     private final BadgeConverter badgeConverter;
 
     // 뱃지 정보 조회 (내역 포함)
@@ -48,37 +51,34 @@ public class BadgeService {
     }
 
     // 점수 부여
-    public void rewardPoints(Long memberId, ReasonType reasonType) {
-        Member member = getMember(memberId);
+    public void rewardPoints(Member member, ReasonType reasonType) {
+        int amount = reasonType.getDefaultScore();
 
-        if (pointHistoryRepository.existsByMemberAndReasonType(member, reasonType)) {
-            return;
-        }
+        Badge badge = badgeRepository.findByMember(member).orElseThrow(
+                () -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
 
-        int currentTotalScore = pointHistoryRepository.calculateTotalScore(member);
+        int currentScore = badge.getTotal_score();
 
-        // 100점 이상이라면 지급 X
-        if (currentTotalScore >= 100) {
-            return;
-        }
+        int potetialScore = currentScore + amount;
 
-        int pointsToAdd = reasonType.getDefaultScore();
-        int potentialScore = currentTotalScore + pointsToAdd;
+        int potentialScore = currentScore + amount;
 
-        // 더해서 100점 초과라면 일부만 지급
         if (potentialScore > 100) {
-            pointsToAdd = 100 - currentTotalScore;
+            amount = 100 - currentScore; // 100점까지만 채움
+        } else if (potentialScore < 0) {
+            amount = -currentScore;
         }
 
-        if (pointsToAdd > 0) {
-            PointHistory pointHistory = PointHistory.builder()
-                    .member(member)
-                    .reasonType(reasonType)
-                    .changeAmount(reasonType.getDefaultScore())
-                    .build();
-            pointHistoryRepository.save(pointHistory);
-        }
+        if (amount == 0) return; // 변동 없으면 종료
 
+        badge.addScore(amount); // Badge 엔티티 업데이트
+
+        PointHistory pointHistory = PointHistory.builder()
+                .member(member)
+                .reasonType(reasonType)
+                .changeAmount(amount)
+                .build();
+        pointHistoryRepository.save(pointHistory);
     }
 
     // 본인 인증
@@ -86,7 +86,7 @@ public class BadgeService {
         Member member = getMember(memberId);
 
         if (Boolean.TRUE.equals(member.isVerified())) {
-            rewardPoints(member.getId(), ReasonType.AUTH);
+            rewardPoints(member, ReasonType.AUTH);
         }
     }
 
@@ -101,7 +101,7 @@ public class BadgeService {
                 member.getTargetLanguageLevel() != null;
 
         if (isComplete) {
-            rewardPoints(member.getId(), ReasonType.PROFILE);
+            rewardPoints(member, ReasonType.PROFILE);
         }
     }
 
@@ -110,10 +110,15 @@ public class BadgeService {
         Member member = getMember(memberId);
 
         if (member.getRecommendCount() >= 10) {
-            rewardPoints(member.getId(), ReasonType.POSITIVE);
+            rewardPoints(member, ReasonType.POSITIVE);
         }
     }
 
+    // 미션용 지급
+    public void rewardRepeatable(Long memberId, ReasonType reasonType) {
+        Member member = getMember(memberId);
+        rewardPoints(member, reasonType);
+    }
 
     // 사용자 찾기 메소드
     private Member getMember(Long memberId) {

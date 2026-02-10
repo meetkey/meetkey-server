@@ -78,6 +78,7 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Integer notRecommendCount = 0;
+
     /*
      * 관심사
      */
@@ -132,5 +133,6 @@ public class Member extends BaseEntity {
     public void updateCertificated() {
         this.isVerified = true;
     }
+
 
 }
