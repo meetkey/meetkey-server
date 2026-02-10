@@ -18,7 +18,7 @@ public class Badge extends BaseEntity {
     private Long id;
 
     @JoinColumn(name = "member_id", nullable = false)
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     private Member member;
 
     @Builder.Default
@@ -27,5 +27,10 @@ public class Badge extends BaseEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private BadgeLevel level;
+
+    public void addScore(int score) {
+        this.total_score += score;
+    }
+
 
 }

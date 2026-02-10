@@ -2,6 +2,9 @@ package com.meetkey.server.domain.auth.service;
 
 import com.meetkey.server.domain.auth.entity.RefreshToken;
 import com.meetkey.server.domain.auth.repository.RefreshTokenRepository;
+import com.meetkey.server.domain.badge.entity.Badge;
+import com.meetkey.server.domain.badge.enums.BadgeLevel;
+import com.meetkey.server.domain.badge.service.BadgeService;
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.SocialLogin;
@@ -41,6 +44,7 @@ public class AuthService {
     private final OauthOidcHelper oAuthOIDCHelper;
     private final JwtUtil jwtUtil;
     private final MemberService memberService;
+    private final BadgeService badgeService;
 
     private final SocialLoginRepository socialLoginRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -73,6 +77,13 @@ public class AuthService {
         MemberReqDTO.Signup memberReqDTO = OauthConverter.toMemberSignUpDTO(req);
         // Member 생성
         Member member = memberService.signup(provider, providerId, memberReqDTO);
+
+        // 회원 가입시 자동적으로 뱃지 생성
+        Badge initalBadge = Badge.builder()
+                .member(member)
+                .total_score(0)
+                .level(BadgeLevel.NONE)
+                .build();
 
         // 밋키 서비스 토큰 발급
         return getJwtResponseDTO(member);
