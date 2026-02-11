@@ -85,7 +85,7 @@ public class BadgeService {
     public void checkAuthentication(Long memberId) {
         Member member = getMember(memberId);
 
-        if (Boolean.TRUE.equals(member.isVerified())) {
+        if (Boolean.TRUE.equals(member.isVerified()) && !hasAlreadyReceived(member, ReasonType.AUTH)) {
             rewardPoints(member, ReasonType.AUTH);
         }
     }
@@ -100,7 +100,7 @@ public class BadgeService {
                 member.getTargetLanguage() != null &&
                 member.getTargetLanguageLevel() != null;
 
-        if (isComplete) {
+        if (isComplete && !hasAlreadyReceived(member, ReasonType.PROFILE)) {
             rewardPoints(member, ReasonType.PROFILE);
         }
     }
@@ -109,7 +109,7 @@ public class BadgeService {
     public void checkPositiveEvaluation(Long memberId) {
         Member member = getMember(memberId);
 
-        if (member.getRecommendCount() >= 10) {
+        if (member.getRecommendCount() >= 10 && !hasAlreadyReceived(member, ReasonType.PROFILE)) {
             rewardPoints(member, ReasonType.POSITIVE);
         }
     }
@@ -118,6 +118,10 @@ public class BadgeService {
     public void rewardRepeatable(Long memberId, ReasonType reasonType) {
         Member member = getMember(memberId);
         rewardPoints(member, reasonType);
+    }
+
+    private boolean hasAlreadyReceived(Member member, ReasonType reasonType) {
+        return pointHistoryRepository.existsByMemberAndReasonType(member, reasonType);
     }
 
     // 사용자 찾기 메소드
