@@ -167,6 +167,7 @@ public class ProfileController {
             @ApiResponse(description = "200", responseCode = "요청 성공", content = @Content(schema = @Schema(implementation = OtherProfileResponse.class))),
             @ApiResponse(responseCode = "400", description = "MEMBER4041: 해당 사용자를 찾을 수 없습니다., MEMBER4031: 차단된 or 차단한 사용자의 프로필은 조회할 수 없습니다.")
     })
+
     @GetMapping("/{targetId}")
     public ResponseEntity<BasicResponse<OtherProfileResponse>> getOtherProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
