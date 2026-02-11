@@ -61,6 +61,15 @@ public class AuthService {
         MemberReqDTO.Signup memberReqDTO = OauthConverter.toMemberSignUpDTO(req);
         Member member = memberService.devSignup(provider, providerId, memberReqDTO, name);
 
+        // 회원 가입시 자동적으로 뱃지 생성
+        Badge initalBadge = Badge.builder()
+                .member(member)
+                .total_score(0)
+                .level(BadgeLevel.NONE)
+                .build();
+
+        badgeRepository.save(initalBadge);
+
         return getDevJwtResponseDTO(member);
     }
 
