@@ -4,6 +4,7 @@ import com.meetkey.server.domain.auth.entity.RefreshToken;
 import com.meetkey.server.domain.auth.repository.RefreshTokenRepository;
 import com.meetkey.server.domain.badge.entity.Badge;
 import com.meetkey.server.domain.badge.enums.BadgeLevel;
+import com.meetkey.server.domain.badge.respository.BadgeRepository;
 import com.meetkey.server.domain.badge.service.BadgeService;
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.entity.Member;
@@ -40,6 +41,8 @@ public class AuthService {
 
     private final KakaoOauthClient kakaoOauthClient;
     private final AppleOauthClient appleClient;
+
+    private BadgeRepository badgeRepository;
 
     private final OauthOidcHelper oAuthOIDCHelper;
     private final JwtUtil jwtUtil;
@@ -84,6 +87,8 @@ public class AuthService {
                 .total_score(0)
                 .level(BadgeLevel.NONE)
                 .build();
+
+        badgeRepository.save(initalBadge);
 
         // 밋키 서비스 토큰 발급
         return getJwtResponseDTO(member);
