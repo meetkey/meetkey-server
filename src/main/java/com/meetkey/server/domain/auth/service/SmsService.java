@@ -89,7 +89,7 @@ public class SmsService {
     // 검증 및 포인트 지급
     public void completeAuthentication(Long memberId, String phone, String inputCode) {
         verifyAuthCode(phone, inputCode);
-
+        System.out.println(memberId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorStatus.MEMBER_NOT_FOUND));
 
