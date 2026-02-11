@@ -42,7 +42,7 @@ public class AuthService {
     private final KakaoOauthClient kakaoOauthClient;
     private final AppleOauthClient appleClient;
 
-    private BadgeRepository badgeRepository;
+    private final BadgeRepository badgeRepository;
 
     private final OauthOidcHelper oAuthOIDCHelper;
     private final JwtUtil jwtUtil;
