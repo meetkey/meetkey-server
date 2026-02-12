@@ -15,18 +15,18 @@ import java.util.List;
 
 @Builder
 public record RecommendationReqDTO(
-    @Schema(description = "관심사 리스트 (없을 시 전체)", example = "[\"HOBBY\", \"WORKOUT\"]")
+    @Schema(description = "관심사 리스트 (없을 시 전체)", example = "TRAVEL,MOVIE")
     List<InterestType> interests,
-    @Schema(description = "국적 필터 (없을 시 전체)", example = "[\"KOREA\", \"JAPAN\"]")
+    @Schema(description = "국적 필터 (없을 시 전체)", example = "KOREA,JAPAN")
     List<HomeTown> homeTown,
-    @Schema(description = "모국어 필터", example = "[\"KOREAN\"]")
+    @Schema(description = "모국어 필터", example = "KOREAN")
     List<Language> nativeLanguage,
-    @Schema(description = "학습 언어 필터", example = "[\"JAPANESE\"]")
+    @Schema(description = "학습 언어 필터", example = "JAPANESE")
     List<Language> targetLanguage,
-    @Schema(description = "학습 언어 레벨 필터", example = "[\"BEGINNER\"]")
+    @Schema(description = "학습 언어 레벨 필터", example = "BEGINNER")
     List<Level> targetLanguageLevel,
 
-    @Schema(description = "성향(Personality) 태그 리스트 (예: [\"EXTROVERT\", \"GROUP\"])", example = "[\"EXTROVERT\", \"GROUP\"]")
+    @Schema(description = "성향(Personality) 태그 리스트 (예: EXTROVERT,GROUP)", example = "EXTROVERT,GROUP")
     List<String> personalities,
 
     @Schema(description = "최소 나이 (18세 이상)", example = "20")
