@@ -37,6 +37,7 @@ admin:
 
 kakao:
   app-key: ${KAKAO_APP_KEY:}
+  admin-key: ${KAKAO_ADMIN_KEY:}
   map-api-key: ${KAKAO_MAP_API_KEY:}
 
 apple:
