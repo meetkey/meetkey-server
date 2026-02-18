@@ -229,6 +229,7 @@ public class AuthService {
 
     private String getKakaoProviderIdFromIdToken(String idToken){
         OidcDTO.OIDCPublicKeys response = kakaoOauthClient.getKakaoOIDCOpenKeys();
+        System.out.println(response);
         OidcDTO.OIDCDecodePayload payload = oAuthOIDCHelper.getPayloadFromIdToken(
                 idToken,
                 "https://kauth.kakao.com",
