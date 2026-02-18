@@ -151,14 +151,13 @@ public class AuthService {
         Member member = memberService.findMemberById(memberId);
         SocialLogin socialLogin = socialLoginRepository.findByMember(member)
                         .orElseThrow(() -> new AuthException(AuthErrorStatus.INVALID_SOCIAL));
-
         log.info("해당 유저의 social ProviderId: " + socialLogin.getProviderId());
-
         member.updateMemberStatus(Status.INACTIVE); // 소프트 탈퇴 처리
         member.updatePhoneNumber("no_use_" + memberId);
         refreshTokenRepository.delete(refreshToken);
 
         kakaoApiClient.unlink("KakaoAK "+ kakaoAdminKey, "user_id", Long.parseLong(socialLogin.getProviderId()));
+        socialLoginRepository.delete(socialLogin);
     }
 
     @Transactional
