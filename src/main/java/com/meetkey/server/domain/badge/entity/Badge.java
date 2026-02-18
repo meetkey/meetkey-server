@@ -31,6 +31,4 @@ public class Badge extends BaseEntity {
     public void addScore(int score) {
         this.total_score += score;
     }
-
-
 }

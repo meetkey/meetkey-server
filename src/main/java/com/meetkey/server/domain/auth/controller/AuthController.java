@@ -86,6 +86,18 @@ public class AuthController {
                 .body(BasicResponse.success(CommonSuccessStatus._OK, jwts));
     }
 
+    @Operation(summary = "회원 소프트 탈퇴 API")
+    @PostMapping("/withdraw")
+    public ResponseEntity<BasicResponse<Void>> withdraw(
+            @RequestHeader(value = "refresh") String refreshToken,
+            @AuthenticationPrincipal CustomUserDetails details
+    ){
+        Long memberId = details.getMemberId();
+        authService.withdraw(memberId, refreshToken);
+        return ResponseEntity.ok()
+                .body(BasicResponse.success(CommonSuccessStatus._OK, null));
+    }
+
     @Operation(summary = "토큰 재발급 API", description = "access 토큰 기간 만료 시 refresh 토큰으로 재발급합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공", content = @Content(schema = @Schema(implementation = JwtResDTO.JwtResponse.class))),

@@ -90,7 +90,7 @@
     }
 
     function connect() {
-        const socket = new SockJS("http://localhost:8080/ws-chat");
+        const socket = new SockJS("https://meetkey.test-route53.shop/ws-chat");
         stompClient = Stomp.over(socket);
 
         const token = document.getElementById("token").value;

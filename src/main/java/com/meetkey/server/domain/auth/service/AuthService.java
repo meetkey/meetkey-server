@@ -10,6 +10,7 @@ import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.SocialLogin;
 import com.meetkey.server.domain.member.enums.Provider;
+import com.meetkey.server.domain.member.enums.Status;
 import com.meetkey.server.domain.member.repository.SocialLoginRepository;
 import com.meetkey.server.domain.member.service.MemberService;
 import com.meetkey.server.global.security.jwt.dto.JwtResDTO;
@@ -21,8 +22,10 @@ import com.meetkey.server.global.security.oauth.dto.OauthReqDTO;
 import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
 import com.meetkey.server.domain.auth.exception.AuthException;
 import com.meetkey.server.global.security.oauth.dto.OidcDTO;
+import com.meetkey.server.global.security.oauth.kakao.KakaoApiClient;
 import com.meetkey.server.global.security.oauth.kakao.KakaoOauthClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +35,16 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
+    private final KakaoApiClient kakaoApiClient;
     @Value("${kakao.app-key}")
     private String kakaoAppKey;
     @Value(("{apple.app-key}"))
     private String appleAppKey;
+    @Value("${kakao.admin-key}")
+    private String kakaoAdminKey;
 
     private final KakaoOauthClient kakaoOauthClient;
     private final AppleOauthClient appleClient;
@@ -47,7 +54,6 @@ public class AuthService {
     private final OauthOidcHelper oAuthOIDCHelper;
     private final JwtUtil jwtUtil;
     private final MemberService memberService;
-    private final BadgeService badgeService;
 
     private final SocialLoginRepository socialLoginRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -85,19 +91,20 @@ public class AuthService {
         }
         else throw new AuthException(AuthErrorStatus.INVALID_SOCIAL);
 
-
+        Member member;
         MemberReqDTO.Signup memberReqDTO = OauthConverter.toMemberSignUpDTO(req);
-        // Member 생성
-        Member member = memberService.signup(provider, providerId, memberReqDTO);
 
-        // 회원 가입시 자동적으로 뱃지 생성
-        Badge initalBadge = Badge.builder()
-                .member(member)
-                .total_score(0)
-                .level(BadgeLevel.NONE)
-                .build();
+            // Member 생성
+            member = memberService.signup(provider, providerId, memberReqDTO);
 
-        badgeRepository.save(initalBadge);
+            // 회원 가입시 자동적으로 뱃지 생성
+            Badge initalBadge = Badge.builder()
+                    .member(member)
+                    .total_score(0)
+                    .level(BadgeLevel.NONE)
+                    .build();
+
+            badgeRepository.save(initalBadge);
 
         // 밋키 서비스 토큰 발급
         return getJwtResponseDTO(member);
@@ -128,7 +135,30 @@ public class AuthService {
 
         // 존재하면 jwtToken 발급
         Member member = socialMember.get().getMember();
+        if (member.getStatus() == Status.INACTIVE){
+            return JwtResDTO.JwtResponse.builder()
+                    .accessToken(null)
+                    .refreshToken(null)
+                    .isNewMember(true)
+                    .memberId(member.getId())
+                    .build();
+        }
         return getJwtResponseDTO(member);
+    }
+
+    @Transactional
+    public void withdraw(Long memberId, String refreshToken){
+        Member member = memberService.findMemberById(memberId);
+        SocialLogin socialLogin = socialLoginRepository.findByMember(member)
+                        .orElseThrow(() -> new AuthException(AuthErrorStatus.INVALID_SOCIAL));
+
+        log.info("해당 유저의 social ProviderId: " + socialLogin.getProviderId());
+
+        member.updateMemberStatus(Status.INACTIVE); // 소프트 탈퇴 처리
+        member.updatePhoneNumber("");
+        refreshTokenRepository.delete(refreshToken);
+
+        kakaoApiClient.unlink("KakaoAK "+ kakaoAdminKey, "user_id", Long.parseLong(socialLogin.getProviderId()));
     }
 
     @Transactional
