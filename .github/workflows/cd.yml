@@ -58,6 +58,7 @@ jobs:
             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
             export ADMIN_SECRET='${{ secrets.ADMIN_SECRET }}'
             export KAKAO_APP_KEY='${{ secrets.KAKAO_APP_KEY }}'
+            export KAKAO_ADMIN_KEY='${{ secrets.KAKAO_ADMIN_KEY }}'
             
             export COOLSMS_API_KEY=${{ secrets.COOLSMS_API_KEY }}
             export COOLSMS_API_SECRET=${{ secrets.COOLSMS_API_SECRET }}

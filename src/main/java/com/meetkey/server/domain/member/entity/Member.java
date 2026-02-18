@@ -113,6 +113,29 @@ public class Member extends BaseEntity {
             this.membership = Membership.FREE;
         }
     }
+    public void updateName(String name){
+        this.name = name;
+    }
+
+    public void updateGender(Gender gender){
+        this.gender = gender;
+    }
+
+    public void updateBirthday(LocalDate birthday){
+        this.birthday = birthday;
+    }
+
+    public void updateHomeTown(HomeTown homeTown){
+        this.homeTown = homeTown;
+    }
+
+    public void updatePhoneNumber(String phoneNumber){
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void updateMemberStatus(Status status){
+        this.status = status;
+    }
 
     public void increaseRecommend() {
         this.recommendCount++;

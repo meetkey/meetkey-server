@@ -10,6 +10,7 @@ import com.meetkey.server.domain.member.entity.mapping.FromToId;
 import com.meetkey.server.domain.member.entity.mapping.MemberBlock;
 import com.meetkey.server.domain.member.enums.Provider;
 import com.meetkey.server.domain.member.enums.Role;
+import com.meetkey.server.domain.member.enums.Status;
 import com.meetkey.server.domain.member.exception.MemberErrorStatus;
 import com.meetkey.server.domain.member.exception.MemberException;
 import com.meetkey.server.domain.member.repository.MemberBlockRepository;

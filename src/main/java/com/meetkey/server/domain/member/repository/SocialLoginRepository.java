@@ -1,5 +1,6 @@
 package com.meetkey.server.domain.member.repository;
 
+import com.meetkey.server.domain.member.entity.Member;
 import com.meetkey.server.domain.member.entity.SocialLogin;
 import com.meetkey.server.domain.member.enums.Provider;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,6 @@ public interface SocialLoginRepository extends JpaRepository<SocialLogin, Long> 
             "WHERE s.provider = :provider AND s.providerId = :providerId")
     Optional<SocialLogin> findByProviderAndProviderId(
             @Param("provider") Provider provider, @Param("providerId") String providerId);
+
+    Optional<SocialLogin> findByMember(Member member);
 }
