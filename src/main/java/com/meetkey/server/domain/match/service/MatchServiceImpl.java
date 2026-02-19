@@ -19,6 +19,7 @@ import com.meetkey.server.domain.member.repository.MemberLikeRepository;
 import com.meetkey.server.domain.member.repository.MemberLocationRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.repository.PreferenceRepository;
+import com.meetkey.server.global.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,7 @@ public class MatchServiceImpl implements MatchService {
     private final RecommendationQueueRepository recommendationQueueRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final com.meetkey.server.domain.badge.respository.PointHistoryRepository pointHistoryRepository;
+    private final S3Service s3Service;
 
     @Transactional
     @Override
@@ -364,7 +366,7 @@ public class MatchServiceImpl implements MatchService {
                 .build())
             .interests(interests)
             .personality(personalityDTO)
-            .photoUrls(Collections.emptyList()) // 플레이스홀더
+            .photoUrls(Collections.singletonList(s3Service.generateGetPresignedUrl(member.getProfileImageUrl())))// 플레이스홀더
             .introduction(member.getBio())
             .badge(RecommendationResDTO.BadgeInfoDTO.builder()
                 .level(badgeLevel)
