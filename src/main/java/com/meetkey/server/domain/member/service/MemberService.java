@@ -1,6 +1,8 @@
 package com.meetkey.server.domain.member.service;
 
 
+import com.meetkey.server.domain.auth.exception.AuthErrorStatus;
+import com.meetkey.server.domain.auth.exception.AuthException;
 import com.meetkey.server.domain.member.dto.MemberReqDTO;
 import com.meetkey.server.domain.member.dto.MemberResDTO;
 import com.meetkey.server.domain.member.entity.Member;
@@ -31,6 +33,9 @@ public class MemberService {
 
     @Transactional
     public Member signup(Provider provider, String providerId, MemberReqDTO.Signup req) {
+        if (memberRepository.existsByPhoneNumber(req.phoneNumber())){
+            throw new AuthException(AuthErrorStatus.DUPLICATE_PHONE_NUMBER);
+        }
         Member member = Member.builder()
                 .name(req.name())
                 .targetLanguage(req.targetLanguage())
@@ -56,6 +61,10 @@ public class MemberService {
 
     @Transactional
     public Member devSignup(Provider provider, String providerId, MemberReqDTO.Signup req, String name) {
+        if (memberRepository.existsByPhoneNumber(req.phoneNumber())){
+            throw new AuthException(AuthErrorStatus.DUPLICATE_PHONE_NUMBER);
+        }
+
         Member member = Member.builder()
                 .gender(req.gender())
                 .name(name)

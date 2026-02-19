@@ -15,6 +15,7 @@ public enum AuthErrorStatus implements BaseCode {
     SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH5001", "인증번호 발송에 실패했습니다."),
 
     INVALID_SOCIAL(HttpStatus.BAD_REQUEST, "AUTH4003", "잘못된 소셜 로그인 형식입니다."),
+    DUPLICATE_PHONE_NUMBER(HttpStatus.BAD_REQUEST, "AUTH4004", "중복된 전화번호입니다.")
     ;
     private final HttpStatus status;
     private final String code;

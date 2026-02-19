@@ -19,6 +19,7 @@ import com.meetkey.server.domain.member.repository.MemberLikeRepository;
 import com.meetkey.server.domain.member.repository.MemberLocationRepository;
 import com.meetkey.server.domain.member.repository.MemberRepository;
 import com.meetkey.server.domain.member.repository.PreferenceRepository;
+import com.meetkey.server.global.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +43,7 @@ public class MatchServiceImpl implements MatchService {
     private final RecommendationQueueRepository recommendationQueueRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final com.meetkey.server.domain.badge.respository.PointHistoryRepository pointHistoryRepository;
+    private final S3Service s3Service;
 
     @Transactional
     @Override
@@ -342,6 +341,11 @@ public class MatchServiceImpl implements MatchService {
                 .build();
         }
 
+        List<String> photoUrls = Optional.ofNullable(member.getProfileImageUrl())
+                .map(s3Service::generateGetPresignedUrl)
+                .map(Collections::singletonList)
+                .orElseGet(Collections::emptyList);
+
         // 관심사 목록 조회
         List<String> interests = member.getInterestMembers().stream()
             .map(im -> im.getInterest().getType().name())
@@ -364,7 +368,7 @@ public class MatchServiceImpl implements MatchService {
                 .build())
             .interests(interests)
             .personality(personalityDTO)
-            .photoUrls(Collections.emptyList()) // 플레이스홀더
+            .photoUrls(photoUrls)// 플레이스홀더
             .introduction(member.getBio())
             .badge(RecommendationResDTO.BadgeInfoDTO.builder()
                 .level(badgeLevel)
