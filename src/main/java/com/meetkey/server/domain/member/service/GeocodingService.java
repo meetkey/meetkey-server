@@ -17,8 +17,24 @@ public class GeocodingService {
     @Value("${kakao.map-api-key}")
     private String kakaoMapApiKey;
 
+    // 한국 범위 (위도 33~39, 경도 124~132)
+    private static final double KOREA_MIN_LAT = 33.0;
+    private static final double KOREA_MAX_LAT = 39.0;
+    private static final double KOREA_MIN_LON = 124.0;
+    private static final double KOREA_MAX_LON = 132.0;
+
+    private boolean isInKorea(Double latitude, Double longitude) {
+        return latitude >= KOREA_MIN_LAT && latitude <= KOREA_MAX_LAT
+            && longitude >= KOREA_MIN_LON && longitude <= KOREA_MAX_LON;
+    }
+
     public String getAddress(Double latitude, Double longitude) {
         if (latitude == null || longitude == null) {
+            return null;
+        }
+
+        if (!isInKorea(latitude, longitude)) {
+            log.debug("Skipping Kakao geocoding for non-Korea coordinates: lat={}, lon={}", latitude, longitude);
             return null;
         }
 
