@@ -14,7 +14,7 @@
       <td align="center"><a href="https://github.com/yoojinche"><img src="https://github.com/yoojinche.png" width="100px;" alt=""/><br /><sub><b> 제유진 </b></sub></a><br /></td>
     </tr>
     <tr>
-    <td align="center">역할 채우기</td>
+    <td align="center">인증, 배포</td>
     <td align="center">역할 채우기</td>
     <td align="center">역할 채우기</td>
     <td align="center">역할 채우기</td>
